@@ -68,6 +68,16 @@
         },
         {
             "matches": [
+                "*://platform.worldquantbrain.com/*"
+            ],
+            "run_at": "document_start",
+            "world": "MAIN",
+            "js": [
+                "src/scripts/unsubmittedHover.js"
+            ]
+        },
+        {
+            "matches": [
                 "*://platform.worldquantbrain.com/alpha/*",
                 "*://platform.worldquantbrain.com/alphas/unsubmitted",
                 "*://platform.worldquantbrain.com/learn/operators"
