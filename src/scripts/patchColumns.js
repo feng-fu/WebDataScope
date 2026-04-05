@@ -6,7 +6,7 @@
 
     const SEARCH = '},...e===i.kC.SUBMITTED?[l]:[c],{';
     const VERSION_REGEX = /version:\s*"1\.0\.6"/;
-    const VERSION_REPLACE = 'version:"1.0.6-wqp5"';
+    const VERSION_REPLACE = 'version:"1.0.6-wqp6"';
 
     const EXTRA_COLUMNS = [
         {
@@ -52,6 +52,17 @@
             activeTabsWithoutParent: ['unsubmitted', 'submitted'],
             display: true,
             type: 'string',
+        },
+        {
+            id: 'robustUniverseSharpe',
+            parent: 'is',
+            name: 'Robust U Sharpe',
+            active: false,
+            category: 'WQP',
+            activeTabsWithoutParent: ['unsubmitted', 'submitted'],
+            display: true,
+            type: 'number',
+            width: 110
         },
         {
             id: 'operatorCount',
