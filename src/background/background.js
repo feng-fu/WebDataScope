@@ -343,15 +343,10 @@ function injectFetchInterceptor(tabId) {
                         RA_CHECK_NAMES.includes(check.name) && check.result !== 'PASS' && check.result !== 'PENDING'
                     ).length;
                     
-                    item.is.failedNumPPA = item.is.checks.filter(check =>
+                    item.is.failedNumPPA = item.is.checks.filter(check => 
                         (PPA_CHECK_NAMES.includes(check.name) && check.result !== 'PASS' && check.result !== 'PENDING') || (check.name === "LOW_SHARPE" && check.value < 1)
                     ).length;
-
-                    const robustSharpeCheck = item.is.checks.find(check =>
-                        check.name === 'LOW_ROBUST_UNIVERSE_SHARPE' || check.name === 'LOW_ROBUST_UNIVERSE_SHARPE.WITH_RATIO'
-                    );
-                    item.is.robustUniverseSharpe = robustSharpeCheck?.value ?? null;
-
+                    
                     item.is.WQPPYS = item.is.checks
                         .find(check => check.name === "MATCHES_PYRAMID")?.pyramids
                         ?.map(pyramid => (pyramid.name?.split('/').pop() || '').toLowerCase())

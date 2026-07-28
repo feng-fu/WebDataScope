@@ -6,7 +6,7 @@
 
     const SEARCH = '},...e===i.kC.SUBMITTED?[l]:[c],...a?[d]:[],{';
     const VERSION_REGEX = /version:\s*"1\.0\.6"/;
-    const VERSION_REPLACE = 'version:"1.0.6-wqp8"';
+    const VERSION_REPLACE = 'version:"1.0.6-wqp7"';
 
     const EXTRA_COLUMNS = [
         {
@@ -54,17 +54,6 @@
             type: 'string',
         },
         {
-            id: 'robustUniverseSharpe',
-            parent: 'is',
-            name: 'Robust U Sharpe',
-            active: false,
-            category: 'WQP',
-            activeTabsWithoutParent: ['unsubmitted', 'submitted'],
-            display: true,
-            type: 'number',
-            width: 110
-        },
-        {
             id: 'maxProdCorr',
             name: 'Max Prod Corr',
             active: true,
@@ -107,7 +96,8 @@
         },
     ];
     function buildReplacement() {
-        const colsJson = EXTRA_COLUMNS.map(col => JSON.stringify(col)).join(',');
+        const customColumns = Array.isArray(globalThis.WQS_CUSTOM_COLUMNS) ? globalThis.WQS_CUSTOM_COLUMNS : [];
+        const colsJson = [...EXTRA_COLUMNS, ...customColumns].map(col => JSON.stringify(col)).join(',');
         return `},...e===i.kC.SUBMITTED?[l]:[c],...a?[d]:[],${colsJson},{`;
     }
 

@@ -23,7 +23,10 @@
             "matches": ["https://platform.worldquantbrain.com/*"],
             "run_at": "document_start",
             "world": "MAIN",
-            "js": ["src/content/platform/common/patchColumns.js"]
+            "js": [
+                "src/custom/platform/robustUniverseSharpe.js",
+                "src/content/platform/common/patchColumns.js"
+            ]
         },
         {
             "matches": [
@@ -83,7 +86,7 @@
             "run_at": "document_start",
             "world": "MAIN",
             "js": [
-                "src/content/platform/common/unsubmittedHover.js"
+                "src/custom/platform/unsubmittedHover.js"
             ]
         },
         {
