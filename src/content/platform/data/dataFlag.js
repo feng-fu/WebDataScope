@@ -3,108 +3,86 @@ console.log('dataFlag.js loaded');
 
 const flagMapOtherUniverse = {};
 
-// IndexedDB 配置
-const DB_NAME = 'WQP_Data_Cache';
-const STORE_NAME = 'dataInfo';
-const DB_VERSION = 1;
-
-// ---------------------- IndexedDB Helper ----------------------
-function openDB(version) {
+function requestInfoDataSubset(region, delay, datasetIds, datafieldIds) {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, version || 1);
-        
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
+        chrome.runtime.sendMessage({
+            type: 'WQP_INFO_DATA_SUBSET',
+            region,
+            delay,
+            datasetIds,
+            datafieldIds,
+        }, (response) => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+                return;
             }
-        };
-
-        request.onsuccess = (event) => {
-            resolve(event.target.result);
-        };
-
-        request.onerror = (event) => {
-            reject(event.target.error);
-        };
+            if (!response?.ok) {
+                reject(new Error(response?.error || 'Failed to load info data subset'));
+                return;
+            }
+            resolve(response.data);
+        });
     });
 }
-// ---------------------- Data Loader ----------------------
 
-async function getDataInfo(dataInfoUrl, currentVersion) {
-    let db;
+function getLastPathPart(href) {
     try {
-        db = await openDB();
-        
-        // 使用事务一次性读取
-        const tx = db.transaction([STORE_NAME], 'readonly');
-        const store = tx.objectStore(STORE_NAME);
-        
-        const versionReq = store.get('version');
-        const dataReq = store.get('data');
-        
-        // 将 IDBRequest 转换为 Promise
-        const getResult = (req) => new Promise((resolve, reject) => {
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
-        });
-
-        console.log('Checking IndexedDB cache...');
-        const [cachedVersion, cachedData] = await Promise.all([
-            getResult(versionReq),
-            getResult(dataReq)
-        ]);
-
-        if (cachedVersion === currentVersion && cachedData) {
-            console.log('Version matched. Using cached data.');
-            return cachedData;
-        }
-        
-        console.log('Cache miss or version mismatch. Fetching new data from', dataInfoUrl);
-        const response = await fetch(dataInfoUrl);
-        const arrayBuffer = await response.arrayBuffer();
-        
-        const pakoLib = window.pako || globalThis.pako;
-        const msgpackLib = window.msgpack || globalThis.msgpack;
-
-        if (!pakoLib || !msgpackLib) {
-             throw new Error('Pako or Msgpack library not found in content script scope.');
-        }
-
-        console.log('Decompressing and decoding data...');
-        const inflatedData = pakoLib.inflate(new Uint8Array(arrayBuffer));
-        const dataInfo = msgpackLib.decode(new Uint8Array(inflatedData));
-        
-        // 存入 IndexedDB
-        console.log('Saving data to IndexedDB...');
-        const writeTx = db.transaction([STORE_NAME], 'readwrite');
-        const writeStore = writeTx.objectStore(STORE_NAME);
-        writeStore.put(currentVersion, 'version');
-        writeStore.put(dataInfo, 'data');
-        
-        return dataInfo;
-    } catch (e) {
-        console.error('Error loading data info:', e);
-        return null; 
+        const url = new URL(href);
+        const parts = url.pathname.split('/').filter(Boolean);
+        return parts[parts.length - 1] || '';
+    } catch (_) {
+        const parts = String(href || '').split('/').filter(Boolean);
+        return parts[parts.length - 1] || '';
     }
 }
 
+function collectVisibleDataIds(elements) {
+    const datasetIds = new Set();
+    const datafieldIds = new Set();
 
-function dataFlagFunc(dataSetList, dataInfoUrl, currentVersion, url) {
+    elements.forEach((element) => {
+        const aElement = element.querySelector(".link.link--wrap");
+        if (!aElement?.href) return;
+
+        const lastPart = getLastPathPart(aElement.href);
+        if (!lastPart) return;
+
+        if (aElement.href.includes("data-fields")) {
+            datafieldIds.add(lastPart);
+        } else {
+            datasetIds.add(lastPart);
+        }
+    });
+
+    return {
+        datasetIds: Array.from(datasetIds),
+        datafieldIds: Array.from(datafieldIds),
+    };
+}
+
+function dataFlagFunc(dataSetList, url) {
     if(!url.includes("data/data-sets")) return; // 只在数据集列表页面执行
 
-    getDataInfo(dataInfoUrl, currentVersion).then(dataInfo => {
-        if (!dataInfo) {
-            console.error('Data info load failed, skipping flagging.');
-            return;
-        }
-        
-        waitForElement(".data-table__container", ".data-table__stale-loader-container").then(() => {
+    waitForElement(".data-table__container", ".data-table__stale-loader-container").then(async () => {
             console.log(`${url}完成加载`)
             const delay = document.getElementById('data-delay').querySelector('[aria-selected="true"]').firstChild.innerHTML
             const region = document.getElementById('data-region').querySelector('[aria-selected="true"]').firstChild.innerHTML
             const universe = document.getElementById('data-universe').querySelector('[aria-selected="true"]').firstChild.innerHTML
             const elements = document.querySelectorAll(".rt-tr-group");
+            const { datasetIds, datafieldIds } = collectVisibleDataIds(elements);
+            let dataInfo = null;
+
+            try {
+                dataInfo = await requestInfoDataSubset(region, delay, datasetIds, datafieldIds);
+            } catch (error) {
+                console.error('Data info subset load failed:', error);
+                return;
+            }
+
+            if (!dataInfo) {
+                console.error('Data info subset load failed, skipping flagging.');
+                return;
+            }
 
 
             // 数据分析报告标记
@@ -562,8 +540,7 @@ function dataFlagFunc(dataSetList, dataInfoUrl, currentVersion, url) {
                     console.error('捕获到错误:', error);
                 }
             });
-        })
-      });
+        });
 }
 
 

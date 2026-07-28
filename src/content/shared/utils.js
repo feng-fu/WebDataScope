@@ -1,4 +1,4 @@
-function updateButton(buttonId, buttonText) {
+﻿function updateButton(buttonId, buttonText) {
     // Update the button text and disable it
     let startButton = document.getElementById(buttonId);
     startButton.innerText = buttonText;
@@ -50,6 +50,33 @@ function format(formatString, replacements) {
   return result;
 }
 
+const WQP_SELF_SUMMARY_URL = 'https://api.worldquantbrain.com/users/self/consultant/summary';
+const WQP_SELF_SUMMARY_STORAGE_KEY = 'WQP_Summary';
+
+function getChromeLocalValue(key) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.get(key, (items) => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+                return;
+            }
+            resolve(items?.[key]);
+        });
+    });
+}
+
+function setChromeLocalValue(key, value) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.set({ [key]: value }, () => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+                return;
+            }
+            resolve();
+        });
+    });
+}
+
 async function getDataFromUrl(url, options = {}) {
     // Retry until response.ok with timeout and exponential backoff
     const {
@@ -59,6 +86,18 @@ async function getDataFromUrl(url, options = {}) {
         maxRetries = Infinity,        // 默认无限重试，直到 response.ok
         onRetry = null                // 可选回调：({ attempt, status?, error?, nextDelayMs })
     } = options;
+
+    const forceRefresh = options.forceRefresh === true;
+    const maxRetriesLimit = Number.isFinite(options.maxRetries) ? options.maxRetries : Infinity;
+    const storageKey = url === WQP_SELF_SUMMARY_URL ? WQP_SELF_SUMMARY_STORAGE_KEY : null;
+    if (storageKey && !forceRefresh) {
+        try {
+            const cachedData = await getChromeLocalValue(storageKey);
+            if (cachedData) return cachedData;
+        } catch (error) {
+            console.warn(`Failed to read ${storageKey} from chrome.storage.local`, error);
+        }
+    }
 
     let attempt = 0;
     let delayMs = initialDelayMs;
@@ -81,6 +120,13 @@ async function getDataFromUrl(url, options = {}) {
 
             if (response.ok) {
                 const data = await response.json();
+                if (storageKey) {
+                    try {
+                        await setChromeLocalValue(storageKey, data);
+                    } catch (error) {
+                        console.warn(`Failed to save ${storageKey} to chrome.storage.local`, error);
+                    }
+                }
                 return data;
             }
 
@@ -90,7 +136,7 @@ async function getDataFromUrl(url, options = {}) {
                 try { onRetry({ attempt, status: response.status, nextDelayMs: nextDelay }); } catch (_) { /* noop */ }
             }
 
-            if (attempt >= maxRetries) {
+            if (attempt >= maxRetriesLimit) {
                 throw new Error(`Failed to fetch ${url} after ${attempt} attempts, last status: ${response.status}`);
             }
 
@@ -104,7 +150,7 @@ async function getDataFromUrl(url, options = {}) {
                 try { onRetry({ attempt, error: err, nextDelayMs: nextDelay }); } catch (_) { /* noop */ }
             }
 
-            if (attempt >= maxRetries) {
+            if (attempt >= maxRetriesLimit) {
                 throw new Error(`Failed to fetch ${url} after ${attempt} attempts due to error: ${err?.message || err}`);
             }
 
@@ -176,7 +222,7 @@ function waitForElement(selector, nonselector) {
 
 
 
-async function getAuth(){n=5||0;return new Promise((r,j)=>{chrome.storage.local.get('WQPSummary',async({WQPSummary:a})=>{let d=a;try{if(!a){d=await getDataFromUrl("https://api.worldquantbrain.com/users/self/consultant/summary"),chrome.storage.local.set({WQPSummary:d},()=>{})}}catch(e){if(n<3)return getAuth(n+1).then(r).catch(j);return j(e)}r(["CN","HK"].includes(d?.leaderboard?.country))})})}
+async function getAuth(){n=5||0;return new Promise((r,j)=>{chrome.storage.local.get('WQP_Summary',async({WQP_Summary:a})=>{let d=a;try{if(!a){d=await getDataFromUrl("https://api.worldquantbrain.com/users/self/consultant/summary"),chrome.storage.local.set({WQP_Summary:d},()=>{})}}catch(e){if(n<3)return getAuth(n+1).then(r).catch(j);return j(e)}r(["CN","HK"].includes(d?.leaderboard?.country))})})}
 
 function formatSavedTimestamp(dateString) {
     const date = new Date(dateString);
@@ -216,7 +262,7 @@ function toEasternTime(date) {
 }
 
 // 定义一个变量来存储已提交的 Alpha 列表和上次更新时间
-let submittedAlphasCache = {
+let WQP_SubmittedAlphasCache = {
     data: [],
     lastUpdated: 0
 };
@@ -227,19 +273,19 @@ async function fetchSubmittedAlphas(buttonId, forceRefresh = false) { // Add for
 
     // 从本地存储获取缓存
     const storedCache = await new Promise(resolve => {
-        chrome.storage.local.get('submittedAlphasCache', (result) => {
-            resolve(result.submittedAlphasCache);
+        chrome.storage.local.get('WQP_SubmittedAlphasCache', (result) => {
+            resolve(result.WQP_SubmittedAlphasCache);
         });
     });
 
     if (forceRefresh) {
-        console.log('Force refreshing: Clearing submittedAlphasCache from storage.');
-        await chrome.storage.local.remove('submittedAlphasCache');
-        submittedAlphasCache = { data: [], lastUpdated: 0 }; // Reset in-memory cache
+        console.log('Force refreshing: Clearing WQP_SubmittedAlphasCache from storage.');
+        await chrome.storage.local.remove('WQP_SubmittedAlphasCache');
+        WQP_SubmittedAlphasCache = { data: [], lastUpdated: 0 }; // Reset in-memory cache
     } else if (storedCache && (Date.now() - storedCache.lastUpdated < CACHE_DURATION)) {
-        submittedAlphasCache = storedCache;
-        console.log('从缓存加载已提交的Alpha列表:', submittedAlphasCache.data.length);
-        return submittedAlphasCache.data;
+        WQP_SubmittedAlphasCache = storedCache;
+        console.log('从缓存加载已提交的Alpha列表:', WQP_SubmittedAlphasCache.data.length);
+        return WQP_SubmittedAlphasCache.data;
     }
 
     console.log('缓存失效或不存在，开始获取新的已提交Alpha列表...');
@@ -308,11 +354,11 @@ async function fetchSubmittedAlphas(buttonId, forceRefresh = false) { // Add for
     const filteredAlphas = [...filteredRegularAlphas, ...otherAlphas];
 
     // 更新缓存
-    submittedAlphasCache = {
+    WQP_SubmittedAlphasCache = {
         data: filteredAlphas,
         lastUpdated: Date.now()
     };
-    chrome.storage.local.set({ submittedAlphasCache: submittedAlphasCache });
+    chrome.storage.local.set({ WQP_SubmittedAlphasCache: WQP_SubmittedAlphasCache });
     console.log('已提交的Alpha列表更新完成，总数:', filteredAlphas.length, '(REGULAR:', filteredRegularAlphas.length, ', 其他:', otherAlphas.length, ')');
     // setButtonState(buttonId, `加载完成 (${filteredAlphas.length}个)`, 'enable'); // Commented out
     return filteredAlphas;
