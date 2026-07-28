@@ -4,9 +4,9 @@
     // 在 MAIN world 中同步启动，保证在页面任何 <script> 执行之前就已就位。
     // 这与油猴的效果完全等价。
 
-    const SEARCH = '},...e===i.kC.SUBMITTED?[l]:[c],...a?[d]:[],{';
+    const SEARCH = 'kC.SUBMITTED?[l]:[c],...a?[d]:[],{';
     const VERSION_REGEX = /version:\s*"1\.0\.6"/;
-    const VERSION_REPLACE = 'version:"1.0.6-wqp7"';
+    const VERSION_REPLACE = 'version:"1.0.6-wqp9"';
 
     const EXTRA_COLUMNS = [
         {
@@ -96,9 +96,8 @@
         },
     ];
     function buildReplacement() {
-        const customColumns = Array.isArray(globalThis.WQS_CUSTOM_COLUMNS) ? globalThis.WQS_CUSTOM_COLUMNS : [];
-        const colsJson = [...EXTRA_COLUMNS, ...customColumns].map(col => JSON.stringify(col)).join(',');
-        return `},...e===i.kC.SUBMITTED?[l]:[c],...a?[d]:[],${colsJson},{`;
+        const colsJson = EXTRA_COLUMNS.map(col => JSON.stringify(col)).join(',');
+        return `kC.SUBMITTED?[l]:[c],...a?[d]:[],${colsJson},{`;
     }
 
     async function fetchPatchAndRun(src) {
@@ -149,3 +148,4 @@
 
     console.log('[WQP] patchColumns: MutationObserver 已在 MAIN world 启动');
 })();
+

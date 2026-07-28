@@ -16,9 +16,10 @@ const columnPatchEntry = manifest.content_scripts.find((entry) =>
     entry.js?.includes('src/content/platform/common/patchColumns.js')
 );
 assert.ok(columnPatchEntry, 'patchColumns content-script registration is required');
-assert.deepEqual(columnPatchEntry.js.slice(0, 2), [
+assert.deepEqual(columnPatchEntry.js, [
     'src/custom/platform/robustUniverseSharpe.js',
     'src/content/platform/common/patchColumns.js',
+    'src/custom/platform/unsubmittedHover.js',
 ]);
 
 console.log(`manifest paths: ok (${referencedFiles.length} files)`);

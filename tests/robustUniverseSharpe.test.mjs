@@ -5,9 +5,17 @@ import vm from 'node:vm';
 const source = await readFile(new URL('../src/custom/platform/robustUniverseSharpe.js', import.meta.url), 'utf8');
 let nativeFetchCalls = 0;
 
+class FakeNode {
+    appendChild(node) {
+        this.lastChild = node;
+        return node;
+    }
+}
+
 const context = {
     console,
     Headers,
+    Node: FakeNode,
     Response,
     fetch: async () => {
         nativeFetchCalls += 1;
@@ -34,13 +42,23 @@ vm.createContext(context);
 
 vm.runInContext(source, context, { filename: 'robustUniverseSharpe.js' });
 
-assert.equal(context.WQS_CUSTOM_COLUMNS.length, 1);
-assert.equal(context.WQS_CUSTOM_COLUMNS[0].id, 'robustUniverseSharpe');
-
 const installedFetch = context.fetch;
+const installedAppendChild = context.Node.prototype.appendChild;
 vm.runInContext(source, context, { filename: 'robustUniverseSharpe.js' });
 assert.equal(context.fetch, installedFetch, 'the fetch wrapper must only install once');
-assert.equal(context.WQS_CUSTOM_COLUMNS.length, 1, 'the custom column must not be duplicated');
+assert.equal(context.Node.prototype.appendChild, installedAppendChild, 'the DOM hook must only install once');
+
+const bundleScript = {
+    nodeName: 'SCRIPT',
+    src: '',
+    textContent: 'prefix,{"id":"failedNumRA"},{"id":"operatorCount","parent":"regular"},{suffix',
+};
+new context.Node().appendChild(bundleScript);
+assert.match(bundleScript.textContent, /"id":"operatorCount"[^}]*},\{"id":"robustUniverseSharpe"/);
+
+const alreadyPatched = bundleScript.textContent;
+new context.Node().appendChild(bundleScript);
+assert.equal(bundleScript.textContent, alreadyPatched, 'the custom column must not be duplicated');
 
 const response = await context.fetch('https://api.worldquantbrain.com/users/self/alphas?status=UNSUBMITTED');
 const payload = await response.json();

@@ -136,20 +136,8 @@ settingsForm.addEventListener('submit', saveSettings);
 document.addEventListener('DOMContentLoaded', loadSettings);
 
 // ========== 社区数据 导出/导入 ==========
-function downloadText(filename, text) {
-    const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
 function downloadBytes(filename, bytes, mime = 'application/octet-stream') {
-    const blob = new Blob([bytes], { type: mime });
+    const blob = bytes instanceof Blob ? bytes : new Blob([bytes], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -166,6 +154,87 @@ function formatNow() {
     return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 }
 
+const COMPRESSED_JSON_FORMAT_HEADER = 'WQCS_JSON_V1\n';
+const JSON_CHUNK_MAX_CHARS = 256 * 1024;
+const JSON_INDENT = '  ';
+
+function createJsonChunkWriter(onChunk) {
+    let buffer = '';
+    const flush = () => { if (!buffer) return; onChunk(buffer); buffer = ''; };
+    const push = (text) => {
+        if (!text) return;
+        let offset = 0;
+        while (offset < text.length) {
+            const available = JSON_CHUNK_MAX_CHARS - buffer.length;
+            buffer += text.slice(offset, offset + available);
+            offset += available;
+            if (buffer.length >= JSON_CHUNK_MAX_CHARS) flush();
+        }
+    };
+    return { push, flush };
+}
+
+function pushJsonValue(push, value, depth = 0) {
+    if (value === null || typeof value !== 'object') { push(JSON.stringify(value) ?? 'null'); return; }
+    if (Array.isArray(value)) {
+        if (!value.length) { push('[]'); return; }
+        push('[\n');
+        value.forEach((item, index) => {
+            push(JSON_INDENT.repeat(depth + 1));
+            pushJsonValue(push, item === undefined ? null : item, depth + 1);
+            push(index === value.length - 1 ? '\n' : ',\n');
+        });
+        push(`${JSON_INDENT.repeat(depth)}]`);
+        return;
+    }
+    const keys = Object.keys(value).filter((k) => value[k] !== undefined);
+    if (!keys.length) { push('{}'); return; }
+    push('{\n');
+    keys.forEach((key, index) => {
+        push(JSON_INDENT.repeat(depth + 1));
+        push(`${JSON.stringify(key)}: `);
+        pushJsonValue(push, value[key], depth + 1);
+        push(index === keys.length - 1 ? '\n' : ',\n');
+    });
+    push(`${JSON_INDENT.repeat(depth)}}`);
+}
+
+function createCommunityStateJsonBlob(state) {
+    const parts = [];
+    const writer = createJsonChunkWriter((chunk) => parts.push(chunk));
+    pushJsonValue(writer.push, state);
+    writer.push('\n');
+    writer.flush();
+    return new Blob(parts, { type: 'application/json;charset=utf-8' });
+}
+
+function createCompressedCommunityStateBlob(state) {
+    const chunks = [];
+    const encoder = new TextEncoder();
+    const deflator = new pako.Deflate();
+    const writer = createJsonChunkWriter((chunk) => {
+        deflator.push(encoder.encode(chunk), false);
+        if (deflator.err) throw new Error(deflator.msg || '压缩社区数据失败。');
+    });
+    deflator.onData = (chunk) => chunks.push(chunk);
+    writer.push(COMPRESSED_JSON_FORMAT_HEADER);
+    pushJsonValue(writer.push, state);
+    writer.push('\n');
+    writer.flush();
+    deflator.push(new Uint8Array(0), true);
+    if (deflator.err) throw new Error(deflator.msg || '压缩社区数据失败。');
+    return new Blob(chunks, { type: 'application/octet-stream' });
+}
+
+function decodeCompressedCommunityState(data) {
+    const inflated = pako.inflate(new Uint8Array(data));
+    const prefix = new TextEncoder().encode(COMPRESSED_JSON_FORMAT_HEADER);
+    if (inflated.length >= prefix.length && prefix.every((b, i) => inflated[i] === b)) {
+        return JSON.parse(new TextDecoder().decode(inflated.subarray(prefix.length)));
+    }
+    return msgpack.decode(inflated);
+}
+
 function handleExportCommunity() {
     statusText.textContent = '导出中...';
     chrome.storage.local.get('WQP_CommunityState', ({ WQP_CommunityState }) => {
@@ -174,8 +243,7 @@ function handleExportCommunity() {
                 showStatusMessage('没有可导出的社区数据。', false);
                 return;
             }
-            const json = JSON.stringify(WQP_CommunityState, null, 2);
-            downloadText(`WQP_CommunityState_${formatNow()}.json`, json);
+            downloadBytes(`WQP_CommunityState_${formatNow()}.json`, createCommunityStateJsonBlob(WQP_CommunityState));
             showStatusMessage('导出完成。', true);
         } catch (e) {
             console.error(e);
@@ -192,10 +260,7 @@ function handleExportCommunityCompressed() {
                 showStatusMessage('没有可导出的社区数据。', false);
                 return;
             }
-            // 使用 msgpack 编码 + pako 压缩
-            const packed = msgpack.encode(WQP_CommunityState);
-            const deflated = pako.deflate(packed);
-            downloadBytes(`WQP_CommunityState_${formatNow()}.wqcs`, deflated, 'application/octet-stream');
+            downloadBytes(`WQP_CommunityState_${formatNow()}.wqcs`, createCompressedCommunityStateBlob(WQP_CommunityState));
             showStatusMessage('压缩导出完成。', true);
         } catch (e) {
             console.error(e);
@@ -218,9 +283,7 @@ function handleImportFileChange(evt) {
     if (isCompressed) {
         reader.onload = () => {
             try {
-                const arr = new Uint8Array(reader.result);
-                const inflated = pako.inflate(arr);
-                const obj = msgpack.decode(inflated);
+                const obj = decodeCompressedCommunityState(reader.result);
                 chrome.storage.local.set({ WQP_CommunityState: obj }, () => {
                     if (chrome.runtime.lastError) {
                         showStatusMessage('写入存储失败。', false);

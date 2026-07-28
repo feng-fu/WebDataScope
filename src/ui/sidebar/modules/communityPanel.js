@@ -1,5 +1,5 @@
-﻿import { createCommunityPort, sendMessage } from './runtimeClient.js';
-import { downloadBytes, downloadText, formatNow, setStatus } from './ui.js';
+﻿import { createCommunityPort } from './runtimeClient.js';
+import { downloadBytes, formatNow, setStatus } from './ui.js';
 
 let communityPort = null;
 let running = false;
@@ -9,6 +9,11 @@ const DEFAULT_PROGRESS_LABELS = {
     overall: '总进度',
     detail: '当前阶段',
 };
+
+const COMMUNITY_STATE_KEY = 'WQP_CommunityState';
+const COMPRESSED_JSON_FORMAT_HEADER = 'WQCS_JSON_V1\n';
+const JSON_CHUNK_MAX_CHARS = 256 * 1024;
+const JSON_INDENT = '  ';
 
 const progressNodes = new Map();
 
@@ -310,15 +315,153 @@ function runCommunityAction(action, payload) {
     ensurePort().run(action, payload);
 }
 
+function getCommunityStateFromStorage() {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.get(COMMUNITY_STATE_KEY, (items) => {
+            if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+                return;
+            }
+            resolve(items?.[COMMUNITY_STATE_KEY]);
+        });
+    });
+}
+
+function setCommunityStateToStorage(state) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.set({ [COMMUNITY_STATE_KEY]: state }, () => {
+            if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+                return;
+            }
+            resolve();
+        });
+    });
+}
+
+function createJsonChunkWriter(onChunk) {
+    let buffer = '';
+    const flush = () => {
+        if (!buffer) return;
+        onChunk(buffer);
+        buffer = '';
+    };
+    const push = (text) => {
+        if (!text) return;
+        let offset = 0;
+        while (offset < text.length) {
+            const available = JSON_CHUNK_MAX_CHARS - buffer.length;
+            buffer += text.slice(offset, offset + available);
+            offset += available;
+            if (buffer.length >= JSON_CHUNK_MAX_CHARS) flush();
+        }
+    };
+    return { push, flush };
+}
+
+function pushIndent(push, depth) {
+    push(JSON_INDENT.repeat(depth));
+}
+
+function pushJsonArray(push, value, depth) {
+    if (!value.length) {
+        push('[]');
+        return;
+    }
+    push('[\n');
+    value.forEach((item, index) => {
+        pushIndent(push, depth + 1);
+        pushJsonValue(push, item === undefined ? null : item, depth + 1);
+        push(index === value.length - 1 ? '\n' : ',\n');
+    });
+    pushIndent(push, depth);
+    push(']');
+}
+
+function pushJsonObject(push, value, depth) {
+    const keys = Object.keys(value).filter((key) => value[key] !== undefined);
+    if (!keys.length) {
+        push('{}');
+        return;
+    }
+    push('{\n');
+    keys.forEach((key, index) => {
+        pushIndent(push, depth + 1);
+        push(`${JSON.stringify(key)}: `);
+        pushJsonValue(push, value[key], depth + 1);
+        push(index === keys.length - 1 ? '\n' : ',\n');
+    });
+    pushIndent(push, depth);
+    push('}');
+}
+
+function pushJsonValue(push, value, depth = 0) {
+    if (value === null || typeof value !== 'object') {
+        push(JSON.stringify(value) ?? 'null');
+        return;
+    }
+
+    if (Array.isArray(value)) {
+        pushJsonArray(push, value, depth);
+        return;
+    }
+
+    pushJsonObject(push, value, depth);
+}
+
+function createCommunityStateJsonBlob(state) {
+    const parts = [];
+    const writer = createJsonChunkWriter((chunk) => parts.push(chunk));
+    pushJsonValue(writer.push, state);
+    writer.push('\n');
+    writer.flush();
+    return new Blob(parts, { type: 'application/json;charset=utf-8' });
+}
+
+function createCompressedCommunityStateBlob(state) {
+    const chunks = [];
+    const encoder = new TextEncoder();
+    const deflator = new pako.Deflate();
+    const writer = createJsonChunkWriter((chunk) => {
+        deflator.push(encoder.encode(chunk), false);
+        if (deflator.err) throw new Error(deflator.msg || '压缩社区数据失败。');
+    });
+
+    deflator.onData = (chunk) => chunks.push(chunk);
+    writer.push(COMPRESSED_JSON_FORMAT_HEADER);
+    pushJsonValue(writer.push, state);
+    writer.push('\n');
+    writer.flush();
+    deflator.push(new Uint8Array(0), true);
+    if (deflator.err) throw new Error(deflator.msg || '压缩社区数据失败。');
+    return new Blob(chunks, { type: 'application/octet-stream' });
+}
+
+function byteArrayStartsWith(bytes, text) {
+    const prefix = new TextEncoder().encode(text);
+    if (bytes.length < prefix.length) return false;
+    for (let index = 0; index < prefix.length; index += 1) {
+        if (bytes[index] !== prefix[index]) return false;
+    }
+    return true;
+}
+
+function decodeCompressedCommunityState(data) {
+    const inflated = pako.inflate(new Uint8Array(data));
+    if (byteArrayStartsWith(inflated, COMPRESSED_JSON_FORMAT_HEADER)) {
+        const jsonBytes = inflated.subarray(COMPRESSED_JSON_FORMAT_HEADER.length);
+        return JSON.parse(new TextDecoder().decode(jsonBytes));
+    }
+    return msgpack.decode(inflated);
+}
+
 async function exportCommunity(compressed) {
-    const state = await sendMessage('WQP_COMMUNITY_STATE_GET');
+    const state = await getCommunityStateFromStorage();
     if (!state) throw new Error('没有可导出的社区数据。');
     if (compressed) {
-        const packed = msgpack.encode(state);
-        const deflated = pako.deflate(packed);
-        downloadBytes(`WQP_CommunityState_${formatNow()}.wqcs`, deflated);
+        downloadBytes(`WQP_CommunityState_${formatNow()}.wqcs`, createCompressedCommunityStateBlob(state));
     } else {
-        downloadText(`WQP_CommunityState_${formatNow()}.json`, JSON.stringify(state, null, 2));
+        downloadBytes(`WQP_CommunityState_${formatNow()}.json`, createCommunityStateJsonBlob(state), 'application/json;charset=utf-8');
     }
 }
 
@@ -334,12 +477,11 @@ async function importCommunity(file) {
 
     let state;
     if (compressed) {
-        const inflated = pako.inflate(new Uint8Array(data));
-        state = msgpack.decode(inflated);
+        state = decodeCompressedCommunityState(data);
     } else {
         state = JSON.parse(data);
     }
-    await sendMessage('WQP_COMMUNITY_STATE_SET', { state });
+    await setCommunityStateToStorage(state);
 }
 
 function getActiveTabUrl() {
@@ -423,20 +565,26 @@ export function initCommunityPanel() {
     });
 
     exportCommunityBtn.addEventListener('click', async () => {
+        exportCommunityBtn.classList.add('loading');
         try {
             await exportCommunity(false);
             setStatus('社区数据 JSON 导出完成。', 'success');
         } catch (error) {
             setStatus(`导出失败：${error.message}`, 'error');
+        } finally {
+            exportCommunityBtn.classList.remove('loading');
         }
     });
 
     exportCommunityCompressedBtn.addEventListener('click', async () => {
+        exportCommunityCompressedBtn.classList.add('loading');
         try {
             await exportCommunity(true);
             setStatus('社区数据压缩导出完成。', 'success');
         } catch (error) {
             setStatus(`导出失败：${error.message}`, 'error');
+        } finally {
+            exportCommunityCompressedBtn.classList.remove('loading');
         }
     });
 
