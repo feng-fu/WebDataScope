@@ -1,0 +1,62 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "webdatascope-telemetry",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-02",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "COLLECTION_ENABLED": "true",
+    "KEY_VERSION": "1"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "webdatascope-telemetry",
+      "database_id": "04ab45d0-1b9f-4d5e-abcd-18b484833521",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "INSTALL_RATE_LIMITER",
+      "namespace_id": "12001",
+      "simple": { "limit": 20, "period": 60 }
+    },
+    {
+      "name": "IP_RATE_LIMITER",
+      "namespace_id": "12002",
+      "simple": { "limit": 300, "period": 60 }
+    }
+  ],
+  "env": {
+    "staging": {
+      "name": "webdatascope-telemetry-staging",
+      "preview_urls": false,
+      "vars": {
+        "COLLECTION_ENABLED": "true",
+        "KEY_VERSION": "1"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "webdatascope-telemetry-staging",
+          "database_id": "5a9ffe63-3667-4bd7-abe1-fc71a5d10b56",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "INSTALL_RATE_LIMITER",
+          "namespace_id": "12101",
+          "simple": { "limit": 20, "period": 60 }
+        },
+        {
+          "name": "IP_RATE_LIMITER",
+          "namespace_id": "12102",
+          "simple": { "limit": 300, "period": 60 }
+        }
+      ]
+    }
+  }
+}

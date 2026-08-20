@@ -4,6 +4,7 @@ const CONFIG_KEY = 'WQP_LLM_Config';
 
 const DEFAULT_CONFIG = {
     enabled: false,
+    defaultCollapsed: false,
     baseUrl: '',
     model: '',
     apiKey: '',
@@ -16,6 +17,7 @@ function normalizeBaseUrl(value) {
 function normalizeConfig(config = {}) {
     return {
         enabled: config.enabled === true,
+        defaultCollapsed: config.defaultCollapsed === true,
         baseUrl: normalizeBaseUrl(config.baseUrl),
         model: String(config.model || '').trim(),
         apiKey: String(config.apiKey || '').trim(),
@@ -46,6 +48,9 @@ export async function saveLlmConfig(input = {}) {
     const next = normalizeConfig({
         ...existing,
         enabled: input.enabled === true,
+        defaultCollapsed: typeof input.defaultCollapsed === 'boolean'
+            ? input.defaultCollapsed
+            : existing.defaultCollapsed,
         baseUrl: input.baseUrl,
         model: input.model,
         apiKey: typeof input.apiKey === 'string' && input.apiKey.length > 0

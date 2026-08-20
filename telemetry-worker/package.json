@@ -1,0 +1,19 @@
+{
+  "name": "webdatascope-telemetry-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "dev": "wrangler dev --local --port 8788",
+    "check": "wrangler deploy --dry-run --env=\"\"",
+    "types": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:staging": "wrangler d1 migrations apply DB --env staging --remote",
+    "db:migrate:production": "wrangler d1 migrations apply DB --remote",
+    "secrets:generate": "node scripts/generate-secrets.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.36.0"
+  }
+}

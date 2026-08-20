@@ -1,0 +1,432 @@
+#wqp-community-topic-ai {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 2147483599;
+    display: flex;
+    flex-direction: column;
+    width: min(480px, calc(100vw - 36px));
+    min-width: 320px;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 36px);
+    overflow: hidden;
+    resize: both;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    border-radius: 9px;
+    background: #ffffff;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.2);
+    color: #111827;
+    font: 13px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#wqp-community-topic-ai * {
+    box-sizing: border-box;
+}
+
+#wqp-community-topic-ai.is-collapsed {
+    height: auto !important;
+    min-height: 0;
+    resize: none;
+}
+
+#wqp-community-topic-ai.is-dragging {
+    user-select: none;
+}
+
+#wqp-community-topic-ai.is-collapsed .wqp-topic-ai-content,
+#wqp-community-topic-ai.is-collapsed .wqp-topic-ai-head p {
+    display: none;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-head {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+    cursor: move;
+    touch-action: none;
+    user-select: none;
+}
+
+#wqp-community-topic-ai.is-dragging .wqp-topic-ai-head {
+    cursor: grabbing;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-head strong {
+    font-size: 14px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-head p {
+    margin: 3px 0 0;
+    color: #64748b;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-content {
+    display: grid;
+    flex: 1 1 auto;
+    gap: 11px;
+    min-height: 0;
+    overflow: auto;
+    padding: 13px;
+}
+
+#wqp-community-topic-ai button {
+    min-height: 30px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #111827;
+    cursor: pointer;
+    font: inherit;
+    padding: 5px 9px;
+}
+
+#wqp-community-topic-ai button:disabled {
+    cursor: wait;
+    opacity: 0.55;
+}
+
+#wqp-community-topic-ai button.wqp-topic-ai-primary {
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #ffffff;
+}
+
+#wqp-community-topic-ai button.wqp-topic-ai-danger {
+    border-color: #dc2626;
+    background: #fff1f2;
+    color: #b91c1c;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-toolbar,
+#wqp-community-topic-ai .wqp-topic-ai-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-toolbar > div {
+    display: flex;
+    gap: 6px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-option,
+#wqp-community-topic-ai .wqp-topic-ai-field,
+#wqp-community-topic-ai .wqp-topic-ai-result-body label {
+    display: grid;
+    gap: 6px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-option {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    border: 1px solid #dbeafe;
+    border-radius: 7px;
+    background: #eff6ff;
+    padding: 8px 10px;
+}
+
+#wqp-community-topic-ai textarea {
+    width: 100%;
+    resize: vertical;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    color: #111827;
+    font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    padding: 8px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-note,
+#wqp-community-topic-ai .wqp-topic-ai-status,
+#wqp-community-topic-ai .wqp-topic-ai-muted {
+    margin: 0;
+    color: #64748b;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-status.success {
+    color: #166534;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-status.error,
+#wqp-community-topic-ai .wqp-topic-ai-error {
+    color: #991b1b;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-results {
+    display: grid;
+    gap: 8px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-result {
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-result.is-error {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-result > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    padding: 9px 10px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-result > summary span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-result > summary em {
+    flex: 0 0 auto;
+    color: #2563eb;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-result-body {
+    display: grid;
+    gap: 9px;
+    padding: 0 10px 10px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-summary {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 8px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-summary > summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-markdown {
+    margin-top: 8px;
+    border-radius: 7px;
+    background: #ffffff;
+    padding: 9px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-markdown h2,
+#wqp-community-topic-ai .wqp-topic-ai-markdown h3,
+#wqp-community-topic-ai .wqp-topic-ai-markdown h4,
+#wqp-community-topic-ai .wqp-topic-ai-markdown p,
+#wqp-community-topic-ai .wqp-topic-ai-markdown ul,
+#wqp-community-topic-ai .wqp-topic-ai-markdown ol {
+    margin: 0 0 7px;
+}
+
+#wqp-community-topic-ai .wqp-topic-ai-comment-link {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+#wqp-topic-unread-filter-button {
+    display: inline-flex;
+    min-height: 36px;
+    max-width: 100%;
+    align-items: center;
+    gap: 8px;
+    margin-left: 8px;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    box-shadow: 0 2px 7px rgba(37, 99, 235, 0.1);
+    color: #1e40af;
+    cursor: pointer;
+    font: 650 13px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 7px 8px 7px 12px;
+    transition: border-color 150ms ease, box-shadow 150ms ease, color 150ms ease,
+        background 150ms ease, transform 150ms ease;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+#wqp-topic-unread-filter-button:hover {
+    border-color: #2563eb;
+    box-shadow: 0 5px 13px rgba(37, 99, 235, 0.18);
+    color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+#wqp-topic-unread-filter-button.is-active {
+    border-color: #2563eb;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.26);
+    color: #ffffff;
+}
+
+#wqp-topic-unread-filter-button.is-active:hover {
+    border-color: #1d4ed8;
+    box-shadow: 0 6px 16px rgba(29, 78, 216, 0.32);
+    color: #ffffff;
+}
+
+#wqp-topic-unread-filter-button:active {
+    box-shadow: 0 2px 7px rgba(37, 99, 235, 0.18);
+    transform: translateY(0) scale(0.98);
+}
+
+#wqp-topic-unread-filter-button:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+}
+
+#wqp-topic-unread-filter-button .wqp-topic-unread-filter-icon {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+}
+
+#wqp-topic-unread-filter-button .wqp-topic-unread-filter-count {
+    display: inline-flex;
+    min-width: 24px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    border: 1px solid rgba(37, 99, 235, 0.14);
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font: 750 11px/1 system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+#wqp-topic-unread-filter-button.is-active .wqp-topic-unread-filter-count {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+}
+
+#main-content.posts-list > section.wqp-topic-read-filtered {
+    display: none !important;
+}
+
+.posts-list .striped-list-item > .wqp-topic-marker-rail {
+    display: grid;
+    flex: 0 0 76px;
+    align-self: stretch;
+    align-content: space-between;
+    justify-items: start;
+    grid-template-rows: auto auto auto;
+    min-width: 76px;
+    margin-right: 10px;
+    padding: 2px 0;
+}
+
+.posts-list .wqp-topic-marker-rail > .wqp-topic-ai-selector {
+    display: inline-flex;
+    grid-row: 1;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    cursor: pointer;
+    font: 700 11px/1 system-ui, sans-serif;
+    padding: 5px 7px;
+}
+
+.posts-list .wqp-topic-ai-selector input {
+    margin: 0;
+}
+
+.posts-list .wqp-topic-ai-selector:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.posts-list .wqp-topic-read-marker,
+.posts-list .wqp-topic-ai-posted-marker {
+    display: inline-block;
+    margin-left: 6px;
+    border-radius: 999px;
+    font: 700 11px/1 system-ui, sans-serif;
+    padding: 4px 7px;
+    vertical-align: middle;
+}
+
+.posts-list .wqp-topic-read-marker {
+    grid-row: 3;
+    margin: 0;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.posts-list .wqp-topic-ai-posted-marker {
+    border: 1px solid #86efac;
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.posts-list button.wqp-topic-favorite-button {
+    display: inline-block;
+    grid-row: 2;
+    min-height: 0;
+    margin: 0;
+    border: 1px solid #fcd34d;
+    border-radius: 999px;
+    background: #fffbeb;
+    color: #a16207;
+    cursor: pointer;
+    font: 700 11px/1 system-ui, sans-serif;
+    padding: 4px 7px;
+    vertical-align: middle;
+}
+
+.posts-list button.wqp-topic-favorite-button.is-favorite {
+    border-color: #f59e0b;
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.posts-list button.wqp-topic-favorite-button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.posts-list .wqp-topic-marker-rail > [hidden] {
+    display: none !important;
+}
+
+@media (max-width: 720px) {
+    #wqp-topic-unread-filter-button {
+        gap: 6px;
+        margin-top: 6px;
+        margin-left: 6px;
+        font-size: 12px;
+        padding-left: 10px;
+    }
+
+    #wqp-community-topic-ai {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        min-width: 0;
+        max-height: calc(100vh - 20px);
+    }
+}

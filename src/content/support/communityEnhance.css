@@ -1,0 +1,170 @@
+:root {
+    --wqp-ce-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    --wqp-ce-mono: "JetBrains Mono", "JetBrainsMono Nerd Font", ui-monospace,
+        SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+@font-face {
+    font-family: "JetBrains Mono";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: local("JetBrains Mono"), local("JetBrains Mono Regular"),
+        url("https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@2.304/fonts/webfonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+
+html {
+    --heading-font: var(--wqp-ce-sans) !important;
+    --text-font: var(--wqp-ce-sans) !important;
+    font-family: var(--wqp-ce-sans) !important;
+}
+
+body,
+h1, h2, h3, h4, h5, h6,
+.post,
+.post-content,
+.post-body,
+.post-info,
+.comment,
+.comment-body,
+.article-body,
+.striped-list-title,
+.striped-list-info,
+.meta-group,
+.meta-data {
+    font-family: var(--wqp-ce-sans) !important;
+    letter-spacing: normal !important;
+}
+
+.post-content *:not(i):not(code):not(kbd):not(samp):not(pre):not(tt):not([class*="icon"]):not([class^="hljs"]),
+.post-body *:not(i):not(code):not(kbd):not(samp):not(pre):not(tt):not([class*="icon"]):not([class^="hljs"]),
+.comment-body *:not(i):not(code):not(kbd):not(samp):not(pre):not(tt):not([class*="icon"]):not([class^="hljs"]),
+.article-body *:not(i):not(code):not(kbd):not(samp):not(pre):not(tt):not([class*="icon"]):not([class^="hljs"]) {
+    font-family: inherit !important;
+    letter-spacing: inherit !important;
+}
+
+html body pre,
+html body pre *,
+html body code,
+html body code *,
+html body .wqp-ce-code,
+html body .wqp-ce-code * {
+    font-family: var(--wqp-ce-mono) !important;
+    letter-spacing: 0 !important;
+}
+
+.status-label,
+.content-tag,
+.content-tag-item,
+.content-tag-item a,
+.post-overview-item a,
+.post-overview-item span,
+.community-badge-title {
+    border-radius: 999px !important;
+}
+
+.status-label {
+    font-weight: 600 !important;
+}
+
+.status-label-official { background: #1d4ed8 !important; color: #fff !important; }
+.status-label-pinned { background: #d97706 !important; color: #fff !important; }
+.status-label-featured { background: #7c3aed !important; color: #fff !important; }
+.status-label-answered,
+.status-label-solved,
+.status-label-completed { background: #15803d !important; color: #fff !important; }
+.status-label-planned { background: #0e7490 !important; color: #fff !important; }
+.status-label-pending,
+.status-label-pending-moderation { background: #2563eb !important; color: #fff !important; }
+.status-label-closed,
+.status-label-not-planned,
+.status-label-hold { background: #475569 !important; color: #f8fafc !important; }
+
+.comment-wrapper.comment-official {
+    background: #eff6ff !important;
+    border-left: 4px solid #1d4ed8 !important;
+}
+
+.comment-official.status-label,
+.status-label-official.comment-official {
+    background: #1d4ed8 !important;
+    border-radius: 0 0 4px 4px !important;
+    color: #fff !important;
+}
+
+.community-badge-title[data-wqp-ce="gold"] { background: #d97706 !important; color: #fff !important; }
+.community-badge-title[data-wqp-ce="silver"] { background: #64748b !important; color: #fff !important; }
+.community-badge-title[data-wqp-ce="bronze"] { background: #b45309 !important; color: #fff !important; }
+.community-badge-title[data-wqp-ce="staff"] { background: #1d4ed8 !important; color: #fff !important; }
+.community-badge-title[data-wqp-ce="consultant"] { background: #0f766e !important; color: #fff !important; }
+
+.striped-list-item.wqp-ce-followed-post,
+.posts-list li.wqp-ce-followed-post {
+    background: rgba(201, 162, 39, 0.07) !important;
+}
+
+.wqp-ce-followed-author,
+.wqp-ce-followed-author a {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: #c9a227 !important;
+    font-weight: 600 !important;
+    outline: none !important;
+}
+
+.wqp-ce-follow-btn {
+    background: transparent !important;
+    border: 0 !important;
+    color: #a1a1aa !important;
+    cursor: pointer;
+    display: inline !important;
+    font: inherit !important;
+    margin: 0 0 0 0.3em !important;
+    padding: 0 !important;
+    vertical-align: baseline;
+}
+
+.wqp-ce-follow-btn[aria-pressed="true"] {
+    color: #d4af37 !important;
+}
+
+.wqp-ce-op { color: #0f766e; font-weight: 600; }
+.wqp-ce-field { color: #0369a1; }
+.wqp-ce-api { color: #c2410c; }
+
+.hljs-comment, .hljs-quote { color: #6a737d; }
+.hljs-keyword, .hljs-selector-tag { color: #b31d28; }
+.hljs-string { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-attr, .hljs-attribute { color: #e36209; }
+.hljs-title, .hljs-built_in { color: #6f42c1; }
+
+@media (prefers-color-scheme: dark) {
+    .wqp-ce-op { color: #7ee787; }
+    .wqp-ce-field { color: #79c0ff; }
+    .wqp-ce-api { color: #ffa657; }
+    .hljs-comment, .hljs-quote { color: #8b949e; }
+    .hljs-keyword, .hljs-selector-tag { color: #ff7b72; }
+    .hljs-string { color: #a5d6ff; }
+    .hljs-number, .hljs-literal { color: #79c0ff; }
+    .hljs-attr, .hljs-attribute { color: #ffa657; }
+    .hljs-title, .hljs-built_in { color: #d2a8ff; }
+}
+
+html[data-darkreader-scheme="dark"] .wqp-ce-op { color: #7ee787; }
+html[data-darkreader-scheme="dark"] .wqp-ce-field { color: #79c0ff; }
+html[data-darkreader-scheme="dark"] .wqp-ce-api { color: #ffa657; }
+html[data-darkreader-scheme="dark"] .hljs-comment,
+html[data-darkreader-scheme="dark"] .hljs-quote { color: #8b949e; }
+html[data-darkreader-scheme="dark"] .hljs-keyword,
+html[data-darkreader-scheme="dark"] .hljs-selector-tag { color: #ff7b72; }
+html[data-darkreader-scheme="dark"] .hljs-string { color: #a5d6ff; }
+html[data-darkreader-scheme="dark"] .hljs-number,
+html[data-darkreader-scheme="dark"] .hljs-literal { color: #79c0ff; }
+html[data-darkreader-scheme="dark"] .hljs-attr,
+html[data-darkreader-scheme="dark"] .hljs-attribute { color: #ffa657; }
+html[data-darkreader-scheme="dark"] .hljs-title,
+html[data-darkreader-scheme="dark"] .hljs-built_in { color: #d2a8ff; }

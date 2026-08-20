@@ -1,9 +1,12 @@
 raw_data/*
 data_all/*
-node_modules/*
+node_modules/
+.pnpm-store/
 Reference/*
 package-lock.json
 package.json
+!telemetry-worker/package.json
+!telemetry-worker/pnpm-lock.yaml
 data/*
 figure/*
 img/screenshot.png
@@ -17,3 +20,9 @@ others/*
 DEVELOPMENT.md
 操作说明.md
 .analysis_repos/*
+.sidebar-content-src/
+telemetry-worker/.wrangler/
+telemetry-worker/.dev.vars*
+telemetry-worker/.generated-secrets.json
+telemetry-worker/.admin-credentials.txt
+telemetry-worker/README.md

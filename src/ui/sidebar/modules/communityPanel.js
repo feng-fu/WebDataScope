@@ -1,4 +1,5 @@
 ﻿import { createCommunityPort } from './runtimeClient.js';
+import { loadSidebarLibraries } from './sidebarLibraries.js';
 import { downloadBytes, formatNow, setStatus } from './ui.js';
 
 let communityPort = null;
@@ -11,6 +12,7 @@ const DEFAULT_PROGRESS_LABELS = {
 };
 
 const COMMUNITY_STATE_KEY = 'WQP_CommunityState';
+const COMMUNITY_AI_STATUS_INDEX_KEY = 'WQP_CommunityAiPostStatuses';
 const COMPRESSED_JSON_FORMAT_HEADER = 'WQCS_JSON_V1\n';
 const JSON_CHUNK_MAX_CHARS = 256 * 1024;
 const JSON_INDENT = '  ';
@@ -329,7 +331,10 @@ function getCommunityStateFromStorage() {
 
 function setCommunityStateToStorage(state) {
     return new Promise((resolve, reject) => {
-        chrome.storage.local.set({ [COMMUNITY_STATE_KEY]: state }, () => {
+        chrome.storage.local.set({
+            [COMMUNITY_STATE_KEY]: state,
+            [COMMUNITY_AI_STATUS_INDEX_KEY]: null,
+        }, () => {
             if (chrome.runtime.lastError) {
                 reject(new Error(chrome.runtime.lastError.message));
                 return;
@@ -459,6 +464,7 @@ async function exportCommunity(compressed) {
     const state = await getCommunityStateFromStorage();
     if (!state) throw new Error('没有可导出的社区数据。');
     if (compressed) {
+        await loadSidebarLibraries();
         downloadBytes(`WQP_CommunityState_${formatNow()}.wqcs`, createCompressedCommunityStateBlob(state));
     } else {
         downloadBytes(`WQP_CommunityState_${formatNow()}.json`, createCommunityStateJsonBlob(state), 'application/json;charset=utf-8');
@@ -467,6 +473,7 @@ async function exportCommunity(compressed) {
 
 async function importCommunity(file) {
     const compressed = /\.wqcs$/i.test(file.name);
+    if (compressed) await loadSidebarLibraries();
     const data = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onerror = () => reject(new Error('读取文件失败。'));

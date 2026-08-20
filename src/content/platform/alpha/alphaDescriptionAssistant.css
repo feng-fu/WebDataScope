@@ -1,0 +1,94 @@
+.wqp-alpha-description-ai {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    flex-direction: column;
+    gap: 6px;
+    margin: 4px 0 8px;
+    color: #52627a;
+    font: 12px/1.35 "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.wqp-alpha-description-ai__actions {
+    display: flex;
+    min-height: 34px;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.wqp-alpha-description-ai__status {
+    min-width: 0;
+    overflow: hidden;
+    color: #64748b;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wqp-alpha-description-ai__notice {
+    color: #7c6a3e;
+    font-size: 11px;
+    line-height: 1.45;
+    text-align: right;
+}
+
+.wqp-alpha-description-ai__status.is-loading {
+    color: #2563eb;
+}
+
+.wqp-alpha-description-ai__status.is-success {
+    color: #15803d;
+}
+
+.wqp-alpha-description-ai__status.is-error {
+    color: #b91c1c;
+    white-space: normal;
+}
+
+.wqp-alpha-description-ai__button {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 7px 14px;
+    border: 1px solid #37a944;
+    border-radius: 4px;
+    background: #3db54a;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    line-height: 1;
+    transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+}
+
+.wqp-alpha-description-ai__button:hover:not(:disabled) {
+    border-color: #2f913a;
+    background: #35a642;
+}
+
+.wqp-alpha-description-ai__button:focus-visible {
+    outline: 2px solid rgba(37, 99, 235, 0.35);
+    outline-offset: 2px;
+}
+
+.wqp-alpha-description-ai__button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+@media (max-width: 720px) {
+    .wqp-alpha-description-ai__actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .wqp-alpha-description-ai__status,
+    .wqp-alpha-description-ai__notice {
+        text-align: left;
+        white-space: normal;
+    }
+
+    .wqp-alpha-description-ai__button {
+        align-self: flex-end;
+    }
+}

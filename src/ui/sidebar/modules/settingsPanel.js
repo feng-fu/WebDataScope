@@ -1,4 +1,5 @@
 import { sendMessage } from './runtimeClient.js';
+import { loadSidebarLibraries } from './sidebarLibraries.js';
 import { formatBytes, setStatus } from './ui.js';
 
 const ids = {
@@ -8,6 +9,7 @@ const ids = {
     geniusAlphaCount: 'geniusAlphaCount',
     apiMonitorEnabled: 'apiMonitorEnabled',
     llmEnabled: 'llmEnabled',
+    llmDefaultState: 'llmDefaultState',
     llmBaseUrl: 'llmBaseUrl',
     llmModel: 'llmModel',
     llmApiKey: 'llmApiKey',
@@ -37,6 +39,7 @@ function readLlmConfigFromForm() {
     const apiKey = rawApiKey === '********' ? '' : rawApiKey;
     return {
         enabled: document.getElementById(ids.llmEnabled).checked,
+        defaultCollapsed: document.getElementById(ids.llmDefaultState).value === 'collapsed',
         baseUrl: document.getElementById(ids.llmBaseUrl).value.trim(),
         model: document.getElementById(ids.llmModel).value.trim(),
         apiKey,
@@ -46,6 +49,7 @@ function readLlmConfigFromForm() {
 
 function writeLlmConfigToForm(config = {}) {
     document.getElementById(ids.llmEnabled).checked = config.enabled === true;
+    document.getElementById(ids.llmDefaultState).value = config.defaultCollapsed === true ? 'collapsed' : 'expanded';
     document.getElementById(ids.llmBaseUrl).value = config.baseUrl || '';
     document.getElementById(ids.llmModel).value = config.model || '';
     const apiKeyInput = document.getElementById(ids.llmApiKey);
@@ -98,9 +102,7 @@ async function importDataZip(file) {
     if (!/\.zip$/i.test(file.name)) {
         throw new Error('请选择 zip 文件。');
     }
-    if (!globalThis.WQPDataStore) {
-        throw new Error('数据存储模块未加载。');
-    }
+    await loadSidebarLibraries();
 
     const meta = await globalThis.WQPDataStore.importZip(file, {
         onProgress: ({ current, total, path }) => {
@@ -119,19 +121,6 @@ export async function initSettingsPanel() {
     const importDataZipBtn = document.getElementById('importDataZipBtn');
     const importDataZipFile = document.getElementById('importDataZipFile');
     bindLlmApiKeyPlaceholder();
-
-    setStatus('加载设置...');
-    try {
-        const settings = await sendMessage('WQP_SETTINGS_GET');
-        writeSettingsToForm(settings || {});
-        const llmConfig = await sendMessage('WQP_LLM_CONFIG_GET');
-        writeLlmConfigToForm(llmConfig || {});
-        setStatus('');
-    } catch (error) {
-        setStatus(`设置加载失败：${error.message}`, 'error');
-    }
-
-    await loadDataMeta();
 
     importDataZipBtn.addEventListener('click', () => {
         importDataZipFile.value = '';
@@ -165,15 +154,32 @@ export async function initSettingsPanel() {
         try {
             await sendMessage('WQP_SETTINGS_SAVE', { settings });
             if (llmConfig.enabled) {
-                setStatus('Testing AI model connection...');
+                setStatus('正在测试 AI 模型连接...');
             }
             const savedLlmConfig = await sendMessage('WQP_LLM_CONFIG_SAVE', { config: llmConfig });
             writeLlmConfigToForm(savedLlmConfig || {});
-            setStatus(llmConfig.enabled ? 'Settings saved. AI model connection test passed.' : 'Settings saved. AI is disabled.', 'success');
+            setStatus(llmConfig.enabled ? '设置已保存，AI 模型连接测试通过。' : '设置已保存，AI 功能已关闭。', 'success');
         } catch (error) {
             setStatus(`保存失败：${error.message}`, 'error');
         } finally {
             saveBtn.disabled = false;
         }
     });
+
+    setStatus('加载设置...');
+    const [settingsResult, llmResult] = await Promise.allSettled([
+        sendMessage('WQP_SETTINGS_GET'),
+        sendMessage('WQP_LLM_CONFIG_GET'),
+    ]);
+    const errors = [];
+    if (settingsResult.status === 'fulfilled') writeSettingsToForm(settingsResult.value || {});
+    else errors.push(settingsResult.reason?.message || '基础设置读取失败');
+    if (llmResult.status === 'fulfilled') writeLlmConfigToForm(llmResult.value || {});
+    else errors.push(llmResult.reason?.message || 'AI 设置读取失败');
+    setStatus(errors.length ? `设置加载失败：${errors.join('；')}` : '', errors.length ? 'error' : '');
+
+    const scheduleMetaLoad = globalThis.requestIdleCallback
+        ? (callback) => globalThis.requestIdleCallback(callback, { timeout: 1000 })
+        : (callback) => setTimeout(callback, 0);
+    scheduleMetaLoad(() => loadDataMeta());
 }

@@ -39,7 +39,7 @@ export function downloadText(filename, text) {
     downloadBytes(filename, text, 'application/json;charset=utf-8');
 }
 
-export function bindTabs() {
+export function bindTabs(onActivate = null) {
     const tabs = Array.from(document.querySelectorAll('.tab'));
     const panels = Array.from(document.querySelectorAll('.panel'));
     tabs.forEach((tab) => {
@@ -47,6 +47,7 @@ export function bindTabs() {
             const key = tab.dataset.tab;
             tabs.forEach((item) => item.classList.toggle('is-active', item === tab));
             panels.forEach((panel) => panel.classList.toggle('is-active', panel.dataset.panel === key));
+            if (typeof onActivate === 'function') onActivate(key);
         });
     });
 }

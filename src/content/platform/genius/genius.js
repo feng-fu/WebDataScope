@@ -1242,13 +1242,6 @@ async function rankAna() {
     insertMyRankInfo();
 }
 
-
-
-async function setup(){
-    authToken = await getAuth();
-    setButtonState('WQPAuth', `配置完成${authToken}`, 'disable');
-}
-
 // ############################## WQ Manager ##############################
 
 async function openDataOverview() {
@@ -1284,6 +1277,10 @@ async function openDataOverview() {
 
 function openMeetingCalendar() {
     window.open('https://wqcalendar.hualabtech.com/', '_blank', 'noopener,noreferrer');
+}
+
+function openWqApi() {
+    window.open('https://wqapi.hualabtech.com/', '_blank', 'noopener,noreferrer');
 }
 
 
@@ -1329,18 +1326,19 @@ function insertButton() {
         const buttonContainer = document.createElement('div');
         buttonContainer.id = 'WQButtonContainer';
         buttonContainer.style.display = 'flex'; // Flexbox to arrange buttons side by side
+        buttonContainer.style.flexWrap = 'wrap'; // Keep all tools visible on narrower pages
         buttonContainer.style.justifyContent = 'center'; // Center buttons horizontally
         buttonContainer.style.gap = '10px'; // Space between buttons
 
         // Append buttons to the container
-        buttonContainer.appendChild(ButtonGen('配置插件', 'WQPAuth', setup));
         buttonContainer.appendChild(ButtonGen('运算符分析', 'WQPOPSFetchButton', opsAna));
         buttonContainer.appendChild(ButtonGen('显示运算符分析', 'WQPOPSShowButton', insertOpsTable));
         buttonContainer.appendChild(ButtonGen('排名分析', 'WQPRankFetchButton', rankAna));
         buttonContainer.appendChild(ButtonGen('显示排名分析', 'WQPRankShowButton', insertMyRankInfo));
         buttonContainer.appendChild(ButtonGen('显示排名列表', 'WQPRankListShowButton', insertRankListInfo));
         buttonContainer.appendChild(ButtonGen('WQ Manager', 'WQPDataOverviewButton', openDataOverview));
-        buttonContainer.appendChild(ButtonGen('会议日历与回放', 'WQPMeetingCalendarButton', openMeetingCalendar));
+        buttonContainer.appendChild(ButtonGen('WQ日历', 'WQPMeetingCalendarButton', openMeetingCalendar));
+        buttonContainer.appendChild(ButtonGen('WQ API', 'WQPWQApiButton', openWqApi));
 
         // Insert the button container after the target element
         targetElement.insertAdjacentElement('afterend', buttonContainer);

@@ -15,6 +15,7 @@ const importCommunityBtn = document.getElementById('importCommunityBtn');
 const importCommunityFile = document.getElementById('importCommunityFile');
 const importDataZipBtn = document.getElementById('importDataZipBtn');
 const importDataZipFile = document.getElementById('importDataZipFile');
+const COMMUNITY_AI_STATUS_INDEX_KEY = 'WQP_CommunityAiPostStatuses';
 
 // 加载用户设置
 function loadSettings() {
@@ -284,7 +285,10 @@ function handleImportFileChange(evt) {
         reader.onload = () => {
             try {
                 const obj = decodeCompressedCommunityState(reader.result);
-                chrome.storage.local.set({ WQP_CommunityState: obj }, () => {
+                chrome.storage.local.set({
+                    WQP_CommunityState: obj,
+                    [COMMUNITY_AI_STATUS_INDEX_KEY]: null,
+                }, () => {
                     if (chrome.runtime.lastError) {
                         showStatusMessage('写入存储失败。', false);
                     } else {
@@ -302,7 +306,10 @@ function handleImportFileChange(evt) {
         reader.onload = () => {
             try {
                 const obj = JSON.parse(reader.result);
-                chrome.storage.local.set({ WQP_CommunityState: obj }, () => {
+                chrome.storage.local.set({
+                    WQP_CommunityState: obj,
+                    [COMMUNITY_AI_STATUS_INDEX_KEY]: null,
+                }, () => {
                     if (chrome.runtime.lastError) {
                         showStatusMessage('写入存储失败。', false);
                     } else {

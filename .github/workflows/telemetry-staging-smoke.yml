@@ -1,0 +1,84 @@
+name: Telemetry endpoints smoke test
+
+on:
+  push:
+    paths:
+      - 'telemetry-worker/**'
+      - '.github/workflows/telemetry-staging-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-and-endpoints:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: staging
+            base_url: https://webdatascope-telemetry-staging.zkhweb.workers.dev
+            installation_id: 323e4567-e89b-42d3-a456-426614174002
+            wq_id: SYNTHETIC-GITHUB-STAGING-ONLY
+          - environment: production
+            base_url: https://webdatascope-telemetry.zkhweb.workers.dev
+            installation_id: 423e4567-e89b-42d3-a456-426614174003
+            wq_id: SYNTHETIC-GITHUB-PRODUCTION-ONLY
+    defaults:
+      run:
+        working-directory: telemetry-worker
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+
+    - name: Run unit tests
+      run: node --test
+
+    - name: Verify deployed ${{ matrix.environment }} Worker
+      env:
+        BASE_URL: ${{ matrix.base_url }}
+        INSTALLATION_ID: ${{ matrix.installation_id }}
+        SYNTHETIC_WQ_ID: ${{ matrix.wq_id }}
+      run: |
+        set -euo pipefail
+
+        unauthorized=$(curl --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
+          -sS -o /dev/null -w '%{http_code}' "$BASE_URL/admin")
+        test "$unauthorized" = "401"
+
+        payload=$(jq -nc \
+          --arg installationId "$INSTALLATION_ID" \
+          --arg wqId "$SYNTHETIC_WQ_ID" \
+          '{schemaVersion:1,installationId:$installationId,wqId:$wqId,country:"GB",version:"1.3.0",previousVersion:"1.2.2",reason:"update"}')
+        first_file=$(mktemp)
+        first_status=$(curl --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
+          -sS -o "$first_file" -w '%{http_code}' -X POST "$BASE_URL/v1/registrations" \
+          -H 'Content-Type: application/json' --data-binary "$payload")
+        test "$first_status" = "201" -o "$first_status" = "200"
+        jq -e '.ok == true and .schemaVersion == 1' "$first_file" >/dev/null
+
+        duplicate_file=$(mktemp)
+        duplicate_status=$(curl --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
+          -sS -o "$duplicate_file" -w '%{http_code}' -X POST "$BASE_URL/v1/registrations" \
+          -H 'Content-Type: application/json' --data-binary "$payload")
+        test "$duplicate_status" = "200"
+        jq -e '.ok == true and .created == false' "$duplicate_file" >/dev/null
+
+        invalid=$(jq -nc \
+          --arg installationId "$INSTALLATION_ID" \
+          '{schemaVersion:1,installationId:$installationId,wqId:"X",country:"GB",version:"1.3.0",previousVersion:null,reason:"install",pageUrl:"https://private.invalid"}')
+        invalid_status=$(curl --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
+          -sS -o /dev/null -w '%{http_code}' -X POST "$BASE_URL/v1/registrations" \
+          -H 'Content-Type: application/json' --data-binary "$invalid")
+        test "$invalid_status" = "400"
+
+        preflight_status=$(curl --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
+          -sS -o /dev/null -w '%{http_code}' -X OPTIONS "$BASE_URL/v1/registrations")
+        test "$preflight_status" = "204"

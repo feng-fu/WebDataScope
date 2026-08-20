@@ -1,292 +1,375 @@
-var dataSets = {
-    "fundamental": "Fundamental data",
-    "analyst": "Analyst data",
-    "broker": "Broker",
-    "news": "News data",
-    "socialmedia": "Social media data",
-    "sentiment": "Sentiment data",
-    "pv": "Price volume data",
-    "option": "Option data",
-    "earnings": "Earnings",
-    "insiders": "Insiders",
-    "institutions": "Instiutional Ownership Data",
-    "shortinterest": "Short interest data",
-    "macro": "Macro data",
-    "other": "Other",
-    "risk": "Risk data",
-    "model": "Model data",
-};
-var regions = ['USA', 'ASI', 'CHN', 'EUR', 'GLB', 'HKG', 'KOR', 'TWN', 'AMR', 'JPN'];
-var url = "https://api.worldquantbrain.com/users/self/activities/diversity?grouping=region,delay,dataCategory"
+(function (global) {
+    'use strict';
 
-var non_data = [
-    {'x': 'GLB', 'y': 'Broker'},
-    {'x': 'USA', 'y': 'Broker'},
-    {'x': 'CHN', 'y': 'Broker'},
-    {'x': 'AMR', 'y': 'Broker'},
-    {'x': 'HKG', 'y': 'Broker'},
-    {'x': 'TWN', 'y': 'Broker'},
-    {'x': 'ASI', 'y': 'Broker'},
-    {'x': 'EUR', 'y': 'Broker'},
-    {'x': 'KOR', 'y': 'Broker'},
-    {'x': 'TWN', 'y': 'Insiders'},
-    {'x': 'GLB', 'y': 'Insiders'},
-    {'x': 'CHN', 'y': 'Insiders'},
-    {'x': 'GLB', 'y': 'Instiutional Ownership Data'},
-    {'x': 'CHN', 'y': 'Instiutional Ownership Data'},
-    {'x': 'HKG', 'y': 'Instiutional Ownership Data'},
-    {'x': 'TWN', 'y': 'Instiutional Ownership Data'},
-    {'x': 'ASI', 'y': 'Instiutional Ownership Data'},
-    {'x': 'KOR', 'y': 'Instiutional Ownership Data'},
-    {'x': 'CHN', 'y': 'Macro data'},
-    {'x': 'HKG', 'y': 'Macro data'},
-    {'x': 'TWN', 'y': 'Macro data'},
-    {'x': 'ASI', 'y': 'Macro data'},
-    {'x': 'KOR', 'y': 'Macro data'},
-    {'x': 'CHN', 'y': 'Option data'},
-    {'x': 'HKG', 'y': 'Option data'},
-    {'x': 'TWN', 'y': 'Option data'},
-    {'x': 'ASI', 'y': 'Option data'},
-    {'x': 'KOR', 'y': 'Option data'},
-    {'x': 'CHN', 'y': 'Risk data'},
-    {'x': 'GLB', 'y': 'Sentiment data'},
-    {'x': 'CHN', 'y': 'Sentiment data'},
-    {'x': 'AMR', 'y': 'Sentiment data'},
-    {'x': 'HKG', 'y': 'Sentiment data'},
-    {'x': 'TWN', 'y': 'Sentiment data'},
-    {'x': 'ASI', 'y': 'Sentiment data'},
-    {'x': 'KOR', 'y': 'Sentiment data'},
-    {'x': 'TWN', 'y': 'Social media data'},
-    {'x': 'KOR', 'y': 'Social media data'}
-]
+    const DIVERSITY_URL = 'https://api.worldquantbrain.com/users/self/activities/diversity?grouping=region,delay,dataCategory';
+    const CARD_ID = 'wqp-alpha-distribution';
 
-var non_data_delay0 = [
-    {'x': 'GLB', 'y': 'Fundamental data'},
-    {'x': 'ASI', 'y': 'Fundamental data'},
-    {'x': 'KOR', 'y': 'Fundamental data'},
-    {'x': 'TWN', 'y': 'Fundamental data'},
-    {'x': 'HKG', 'y': 'Fundamental data'},
-    {'x': 'JPN', 'y': 'Fundamental data'},
-    {'x': 'GLB', 'y': 'Analyst data'},
-    {'x': 'ASI', 'y': 'Analyst data'},
-    {'x': 'KOR', 'y': 'Analyst data'},
-    {'x': 'TWN', 'y': 'Analyst data'},
-    {'x': 'HKG', 'y': 'Analyst data'},
-    {'x': 'JPN', 'y': 'Analyst data'},
-    {'x': 'JPN', 'y': 'Broker'},
-    {'x': 'GLB', 'y': 'News data'},
-    {'x': 'ASI', 'y': 'News data'},
-    {'x': 'KOR', 'y': 'News data'},
-    {'x': 'TWN', 'y': 'News data'},
-    {'x': 'HKG', 'y': 'News data'},
-    {'x': 'JPN', 'y': 'News data'},
-    {'x': 'GLB', 'y': 'Social media data'},
-    {'x': 'ASI', 'y': 'Social media data'},
-    {'x': 'HKG', 'y': 'Social media data'},
-    {'x': 'JPN', 'y': 'Social media data'},
-    {'x': 'JPN', 'y': 'Sentiment data'},
-    {'x': 'GLB', 'y': 'Price volume data'},
-    {'x': 'ASI', 'y': 'Price volume data'},
-    {'x': 'KOR', 'y': 'Price volume data'},
-    {'x': 'TWN', 'y': 'Price volume data'},
-    {'x': 'HKG', 'y': 'Price volume data'},
-    {'x': 'JPN', 'y': 'Price volume data'},
-    {'x': 'GLB', 'y': 'Option data'},
-    {'x': 'JPN', 'y': 'Option data'},
-    {'x': 'GLB', 'y': 'Earnings'},
-    {'x': 'ASI', 'y': 'Earnings'},
-    {'x': 'KOR', 'y': 'Earnings'},
-    {'x': 'TWN', 'y': 'Earnings'},
-    {'x': 'HKG', 'y': 'Earnings'},
-    {'x': 'JPN', 'y': 'Earnings'},
-    {'x': 'ASI', 'y': 'Insiders'},
-    {'x': 'KOR', 'y': 'Insiders'},
-    {'x': 'HKG', 'y': 'Insiders'},
-    {'x': 'JPN', 'y': 'Insiders'},
-    {'x': 'JPN', 'y': 'Instiutional Ownership Data'},
-    {'x': 'GLB', 'y': 'Short interest data'},
-    {'x': 'ASI', 'y': 'Short interest data'},
-    {'x': 'KOR', 'y': 'Short interest data'},
-    {'x': 'TWN', 'y': 'Short interest data'},
-    {'x': 'HKG', 'y': 'Short interest data'},
-    {'x': 'JPN', 'y': 'Short interest data'},
-    {'x': 'GLB', 'y': 'Macro data'},
-    {'x': 'JPN', 'y': 'Macro data'},
-    {'x': 'GLB', 'y': 'Other'},
-    {'x': 'ASI', 'y': 'Other'},
-    {'x': 'KOR', 'y': 'Other'},
-    {'x': 'TWN', 'y': 'Other'},
-    {'x': 'HKG', 'y': 'Other'},
-    {'x': 'JPN', 'y': 'Other'},
-    {'x': 'GLB', 'y': 'Risk data'},
-    {'x': 'ASI', 'y': 'Risk data'},
-    {'x': 'KOR', 'y': 'Risk data'},
-    {'x': 'TWN', 'y': 'Risk data'},
-    {'x': 'HKG', 'y': 'Risk data'},
-    {'x': 'JPN', 'y': 'Risk data'},
-    {'x': 'GLB', 'y': 'Model data'},
-    {'x': 'ASI', 'y': 'Model data'},
-    {'x': 'KOR', 'y': 'Model data'},
-    {'x': 'TWN', 'y': 'Model data'},
-    {'x': 'HKG', 'y': 'Model data'},
-    {'x': 'JPN', 'y': 'Model data'}
-]
-
-waitForElement(".card__wrapper").then(() => {
-    var newElement = document.createElement('div');
-    newElement.classList.add('card__content');
-    newElement.classList.add('alpha_distribution');
-
-    newElement.innerHTML = `
-    <div class="canvas"><canvas id="alphaDistribution0"></canvas></div>
-    <div class="canvas"><canvas id="alphaDistribution1"></canvas></div>
-    `;
-
-    // 获取目标元素
-    var targetElement = document.querySelector('.card__wrapper');
-
-
-    // 获取目标元素的第二个子元素
-    var secondChild = targetElement.childNodes[1];
-
-    // 在目标元素的第二个子元素之前插入新的子元素
-    targetElement.insertBefore(newElement, secondChild);
-    // targetElement.appendChild(newElement);
-    fetch(url, {
-        method: 'GET', // 或者是 'POST', 'PUT', 等。
-        credentials: 'include' // 确保包含同源cookie
-    }).then(
-        response => {
-            return response.json()
-
-        }
-    ).then(data => {
-        console.log(data)
-        plotData(data, 0);
-        plotData(data, 1);
-        return data;
-    })
-}).catch(error => console.error(error));
-
-
-
-function plotData(data, delay) {
-    console.log('data.alphas');
-    console.log(data.alphas);
-    let filteredData1 = data.alphas.filter(item => regions.includes(item.region) && dataSets.hasOwnProperty(item.dataCategory.id) && item.delay == delay);
-    console.log('filteredData1');
-    console.log(filteredData1);
-    let scatterData1 = filteredData1.map(item => ({
-        x: item.region,
-        y: dataSets[item.dataCategory.id],
-        value: item.alphaCount,
-        pass: item.dataDiversity.check,
-        total: data.alphas.filter(item_alpha => item_alpha.region == item.region && item_alpha.delay == delay).map(item_count => item_count.alphaCount).reduce((max, current) => Math.max(max, current), 0)
-    }));
-
-    var non_data_copy
-
-    if (delay==0){
-        non_data_copy = non_data.concat(non_data_delay0);
-    }else{
-        non_data_copy = non_data;
+    function finiteNumber(value, fallback = 0) {
+        if (value === null || value === undefined || value === '') return fallback;
+        const number = Number(value);
+        return Number.isFinite(number) ? number : fallback;
     }
-    console.log('non_data_copy')
-    console.log(non_data_copy)
-    non_data_copy = non_data_copy.map(item => ({
-        x: item.x,
-        y: item.y,
-        value: (data.count * 0.2).toFixed(0)
-    }));
-    var ctx = document.getElementById(`alphaDistribution${delay}`).getContext('2d');
 
-    var scatterChart = new Chart(ctx, {
-        type: 'scatter',
-        data: {
-            datasets: [
-                {
-                    label: `Delay${delay}`,
-                    backgroundColor: function (context) {
-                        console.log(context.raw)
-                        // 如果已指定特定点的背景颜色，则使用它，否则使用默认颜色
-                        try{
-                            if (context.raw.pass != "PASS") {
-                                return 'rgba(226, 49, 32, 1)'
-                            } else {
-                                return 'rgba(75, 192, 192, 1)';
-                            }
-                        }catch (error) {
-                            return 'rgba(75, 192, 192, 1)'
-                        }
-                        
-                        // ;
+    function uniqueValuesInOrder(values) {
+        return [...new Set(values.filter(Boolean).map((value) => String(value)))];
+    }
 
-                    },
-                    data: scatterData1
-                },
-                {
-                    label: `NAN`,
-                    backgroundColor: 'rgba(225, 232, 238, 1)',
-                    data: non_data_copy
-                },
-            ]
-        },
-        options: {
-            maintainAspectRatio: false,
-            responsive: true,
-            scales: {
-                x: {
-                    type: 'category',
-                    position: 'bottom',
-                    labels: regions
-                },
-                y: {
-                    type: 'category',
-                    position: 'left',
-                    labels: Object.values(dataSets)
-                }
-            },
-            elements: {
-                point: {
-                    // 回调函数，用于设置散点的半径
-                    radius: function (context) {
-                        try{
-                            var value = context.dataset.data[context.dataIndex].value / data.count * 100;
-                        }catch (error) {
-                            // 当发生异常时执行的代码
-                            console.error(error);
-                            console.error(context.dataset);
-                            var value=0
-                        }                          
-                        return Math.sqrt(value) * 2; // 根据值的大小设置半径
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            let x = context.dataset.data[context.dataIndex].x;
-                            let y = context.dataset.data[context.dataIndex].y;
-                            let value = context.dataset.data[context.dataIndex].value;
-                            let total = context.dataset.data[context.dataIndex].total;
-                            return label + `(${x},${y}) Value: ${value} Ratio: ${(value / total * 100).toFixed(0)}%`;
-                        }
-                    }
-                },
-                legend: {
-                    labels: {
-                        font: {
-                            size: 18 // 将图例的字体大小设置为 18
-                        }
-                    }
-                }
-            }
+    function combineCheck(left, right) {
+        const rank = { PASS: 0, WARN: 1, FAIL: 2 };
+        const normalizedLeft = String(left || '').toUpperCase();
+        const normalizedRight = String(right || '').toUpperCase();
+        if (!normalizedLeft) return normalizedRight;
+        if (!normalizedRight) return normalizedLeft;
+        return (rank[normalizedRight] ?? 2) > (rank[normalizedLeft] ?? 2)
+            ? normalizedRight
+            : normalizedLeft;
+    }
+
+    function percentageGradient(value) {
+        const ratio = Math.max(0, Math.min(1, finiteNumber(value)));
+        const lightness = Math.round((94 - ratio * 55) * 10) / 10;
+        return {
+            ratio,
+            lightness,
+            backgroundColor: `hsl(178 50% ${lightness}%)`,
+            color: ratio >= 0.65 ? '#fff' : '#21494b',
+        };
+    }
+
+    function resolveCellAppearance(check, ratio) {
+        const normalizedCheck = String(check || '').trim().toUpperCase();
+        if (normalizedCheck === 'FAIL') {
+            return { mode: 'fail', backgroundColor: 'rgba(226, 49, 32, 1)', color: '#fff' };
         }
-    });
-}
+        if (normalizedCheck === 'WARN') {
+            return { mode: 'warn', backgroundColor: 'rgba(245, 158, 11, 1)', color: '#fff' };
+        }
+        return { mode: 'gradient', ...percentageGradient(ratio) };
+    }
 
+    function normalizeDiversityData(payload) {
+        const rows = Array.isArray(payload?.alphas) ? payload.alphas : [];
+        const regionSet = new Set();
+        const delaysByRegion = new Map();
+        const categoriesById = new Map();
+        const totals = new Map();
+        const cells = new Map();
+
+        rows.forEach((row) => {
+            const region = String(row?.region || '').trim().toUpperCase();
+            const rawDelay = row?.delay;
+            if (rawDelay === null || rawDelay === undefined || rawDelay === '') return;
+            const delay = Number(rawDelay);
+            if (!region || ![0, 1].includes(delay)) return;
+            regionSet.add(region);
+            if (!delaysByRegion.has(region)) delaysByRegion.set(region, new Set());
+            delaysByRegion.get(region).add(delay);
+
+            const groupKey = `${region}|${delay}`;
+            const categoryId = String(row?.dataCategory?.id || '').trim().toLowerCase();
+            if (!categoryId) {
+                totals.set(groupKey, Math.max(
+                    totals.get(groupKey) || 0,
+                    finiteNumber(row?.alphaCount),
+                ));
+                return;
+            }
+
+            const categoryName = String(row?.dataCategory?.name || categoryId).trim();
+            categoriesById.set(categoryId, categoryName || categoryId);
+            const cellKey = `${groupKey}|${categoryId}`;
+            const existing = cells.get(cellKey);
+            cells.set(cellKey, {
+                region,
+                delay,
+                categoryId,
+                categoryName: categoryName || categoryId,
+                alphaCount: finiteNumber(existing?.alphaCount) + finiteNumber(row?.alphaCount),
+                check: combineCheck(existing?.check, row?.dataDiversity?.check),
+                limit: row?.dataDiversity?.limit ?? existing?.limit ?? null,
+            });
+        });
+
+        for (const [cellKey, cell] of cells) {
+            const groupKey = `${cell.region}|${cell.delay}`;
+            if (!totals.has(groupKey)) {
+                totals.set(groupKey, Math.max(
+                    totals.get(groupKey) || 0,
+                    cell.alphaCount,
+                ));
+            }
+            cells.set(cellKey, {
+                ...cell,
+                ratio: totals.get(groupKey) > 0 ? cell.alphaCount / totals.get(groupKey) : 0,
+            });
+        }
+
+        const regions = uniqueValuesInOrder([...regionSet]);
+        const categories = [...categoriesById.entries()]
+            .map(([id, name]) => ({ id, name }))
+            .sort((left, right) => left.name.localeCompare(right.name));
+        const columns = regions.flatMap((region) => (
+            [...(delaysByRegion.get(region) || [])]
+                .map((delay, index) => ({ region, delay, firstInRegion: index === 0 }))
+        ));
+
+        return {
+            totalAlphaCount: finiteNumber(payload?.count),
+            regions,
+            categories,
+            columns,
+            delaysByRegion,
+            totals,
+            cells,
+        };
+    }
+
+    const modelApi = Object.freeze({
+        normalizeDiversityData,
+        percentageGradient,
+        resolveCellAppearance,
+        uniqueValuesInOrder,
+    });
+    global.WQPDistributionModel = modelApi;
+
+    if (typeof document === 'undefined' || typeof fetch === 'undefined') return;
+    if (global.__wqpAlphaDistributionInstalled) return;
+    global.__wqpAlphaDistributionInstalled = true;
+
+    function createElement(tagName, className = '', text = '') {
+        const element = document.createElement(tagName);
+        if (className) element.className = className;
+        if (text !== '') element.textContent = text;
+        return element;
+    }
+
+    function formatPercent(value) {
+        const percentage = finiteNumber(value) * 100;
+        if (percentage === 0) return '0%';
+        if (percentage < 1) return '<1%';
+        return `${Math.round(percentage)}%`;
+    }
+
+    function createHeader(model) {
+        const header = createElement('div', 'wqp-distribution-header');
+        const heading = createElement('div');
+        heading.append(
+            createElement('div', 'wqp-distribution-title', 'Alpha Distribution'),
+            createElement('div', 'wqp-distribution-subtitle', 'Region / Delay 按接口返回顺序展示'),
+        );
+        const summary = createElement('div', 'wqp-distribution-summary');
+        summary.append(
+            createElement('strong', '', String(model.totalAlphaCount)),
+            document.createTextNode(' Alphas'),
+        );
+        header.append(heading, summary);
+        return header;
+    }
+
+    function createLegend() {
+        const legend = createElement('div', 'wqp-distribution-legend');
+        [
+            ['is-gradient', '其他：按百分比梯度'],
+            ['is-warn', 'WARN'],
+            ['is-fail', 'FAIL'],
+            ['is-empty', '无 Alpha / 无数据'],
+        ].forEach(([className, label]) => {
+            const item = createElement('span', 'wqp-distribution-legend-item');
+            item.append(
+                createElement('span', `wqp-distribution-legend-color ${className}`),
+                document.createTextNode(label),
+            );
+            legend.appendChild(item);
+        });
+        return legend;
+    }
+
+    function createValueCell(model, category, column) {
+        const tableCell = createElement('td', column.firstInRegion ? 'is-region-start' : '');
+        const key = `${column.region}|${column.delay}|${category.id}`;
+        const record = model.cells.get(key);
+        const value = createElement('div', 'wqp-distribution-value');
+
+        if (!record) {
+            value.classList.add('is-empty');
+            value.append(
+                createElement('span', 'wqp-distribution-count', '0'),
+                createElement('span', 'wqp-distribution-ratio', '—'),
+            );
+            value.title = `${category.name} · ${column.region} · Delay ${column.delay}: 0 Alpha`;
+        } else {
+            const appearance = resolveCellAppearance(record.check, record.ratio);
+            value.classList.add(`is-${appearance.mode}`);
+            value.style.backgroundColor = appearance.backgroundColor;
+            value.style.color = appearance.color;
+            value.append(
+                createElement('span', 'wqp-distribution-count', String(record.alphaCount)),
+                createElement('span', 'wqp-distribution-ratio', formatPercent(record.ratio)),
+            );
+            const groupTotal = model.totals.get(`${column.region}|${column.delay}`) || 0;
+            const limit = record.limit === null ? '' : ` · limit ${record.limit}`;
+            value.title = [
+                `${category.name} · ${column.region} · Delay ${column.delay}`,
+                `${record.alphaCount}/${groupTotal} (${formatPercent(record.ratio)})`,
+                `${record.check || 'UNKNOWN'}${limit}`,
+            ].join('\n');
+        }
+        value.setAttribute('aria-label', value.title.replaceAll('\n', ', '));
+        tableCell.appendChild(value);
+        return tableCell;
+    }
+
+    function createDistributionTable(model) {
+        const shell = createElement('div', 'wqp-distribution-table-shell');
+        const table = createElement('table', 'wqp-distribution-table');
+        const columns = document.createElement('colgroup');
+        columns.appendChild(createElement('col', 'wqp-distribution-category-column'));
+        model.columns.forEach(() => columns.appendChild(createElement('col', 'wqp-distribution-data-column')));
+        const head = document.createElement('thead');
+        const regionRow = document.createElement('tr');
+        const categoryHeader = createElement('th', 'wqp-distribution-category-header', 'Category');
+        regionRow.appendChild(categoryHeader);
+        model.regions.forEach((region) => {
+            const regionHeader = createElement('th', 'wqp-distribution-region-header', region);
+            regionHeader.colSpan = model.delaysByRegion.get(region)?.size || 1;
+            regionRow.appendChild(regionHeader);
+        });
+
+        const delayRow = document.createElement('tr');
+        delayRow.appendChild(createElement('th', 'wqp-distribution-delay-spacer'));
+        model.columns.forEach((column) => {
+            const delayHeader = createElement(
+                'th',
+                `wqp-distribution-delay-header${column.firstInRegion ? ' is-region-start' : ''}`,
+                String(column.delay),
+            );
+            delayHeader.title = `${column.region} · Delay ${column.delay}`;
+            delayRow.appendChild(delayHeader);
+        });
+        head.append(regionRow, delayRow);
+
+        const body = document.createElement('tbody');
+        model.categories.forEach((category) => {
+            const row = document.createElement('tr');
+            const nameCell = createElement('th', 'wqp-distribution-category', category.name);
+            nameCell.scope = 'row';
+            nameCell.title = category.id;
+            row.appendChild(nameCell);
+            model.columns.forEach((column) => row.appendChild(createValueCell(model, category, column)));
+            body.appendChild(row);
+        });
+
+        const foot = document.createElement('tfoot');
+        const totalRow = document.createElement('tr');
+        totalRow.appendChild(createElement('th', 'wqp-distribution-category wqp-distribution-total-label', 'TOTAL'));
+        model.columns.forEach((column) => {
+            const totalCell = createElement('td', column.firstInRegion ? 'is-region-start' : '');
+            totalCell.appendChild(createElement(
+                'div',
+                'wqp-distribution-total',
+                String(model.totals.get(`${column.region}|${column.delay}`) || 0),
+            ));
+            totalRow.appendChild(totalCell);
+        });
+        foot.appendChild(totalRow);
+
+        table.append(columns, head, body, foot);
+        shell.appendChild(table);
+        return shell;
+    }
+
+    function renderLoading(card) {
+        card.replaceChildren();
+        const loading = createElement('div', 'wqp-distribution-state');
+        loading.append(
+            createElement('span', 'wqp-distribution-spinner'),
+            document.createTextNode('正在加载 Alpha Distribution…'),
+        );
+        card.appendChild(loading);
+    }
+
+    function renderError(card, error) {
+        card.replaceChildren();
+        const state = createElement('div', 'wqp-distribution-state is-error');
+        state.appendChild(createElement('div', '', `Alpha Distribution 加载失败：${error.message || String(error)}`));
+        const retryButton = createElement('button', 'wqp-distribution-retry', '重新加载');
+        retryButton.type = 'button';
+        retryButton.addEventListener('click', () => loadDistribution(card));
+        state.appendChild(retryButton);
+        card.appendChild(state);
+    }
+
+    function renderDistribution(card, payload) {
+        const model = normalizeDiversityData(payload);
+        if (!model.columns.length || !model.categories.length) {
+            throw new Error('接口没有返回可展示的 Region、Delay 或 Data Category。');
+        }
+        card.replaceChildren(
+            createHeader(model),
+            createLegend(),
+            createDistributionTable(model),
+        );
+    }
+
+    async function requestDiversity() {
+        const response = await fetch(DIVERSITY_URL, {
+            method: 'GET',
+            credentials: 'include',
+            headers: { accept: 'application/json;version=2.0' },
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!Array.isArray(data?.alphas)) throw new Error('接口响应格式无效。');
+        return data;
+    }
+
+    async function loadDistribution(card) {
+        renderLoading(card);
+        try {
+            renderDistribution(card, await requestDiversity());
+        } catch (error) {
+            console.error('[WQP Distribution]', error);
+            renderError(card, error);
+        }
+    }
+
+    function waitForAnchor(timeoutMs = 30000) {
+        return new Promise((resolve, reject) => {
+            const current = document.querySelector('.card__wrapper');
+            if (current) {
+                resolve(current);
+                return;
+            }
+            const observer = new MutationObserver(() => {
+                const element = document.querySelector('.card__wrapper');
+                if (!element) return;
+                observer.disconnect();
+                clearTimeout(timeoutId);
+                resolve(element);
+            });
+            observer.observe(document.documentElement, { childList: true, subtree: true });
+            const timeoutId = setTimeout(() => {
+                observer.disconnect();
+                reject(new Error('未找到 Distribution 页面容器。'));
+            }, timeoutMs);
+        });
+    }
+
+    async function initialize() {
+        const normalizedPath = location.pathname.replace(/\/+$/, '');
+        if (!normalizedPath.endsWith('/alphas/distribution')) return;
+        try {
+            const wrapper = await waitForAnchor();
+            wrapper.querySelectorAll('.alpha_distribution').forEach((element) => element.remove());
+            const card = createElement('section', 'card__content alpha_distribution');
+            card.id = CARD_ID;
+            const insertionPoint = wrapper.children[1] || null;
+            wrapper.insertBefore(card, insertionPoint);
+            await loadDistribution(card);
+        } catch (error) {
+            console.error('[WQP Distribution]', error);
+        }
+    }
+
+    initialize();
+})(typeof globalThis === 'undefined' ? window : globalThis);

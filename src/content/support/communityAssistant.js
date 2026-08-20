@@ -23,7 +23,7 @@
                     return;
                 }
                 if (!response?.ok) {
-                    reject(new Error(response?.error || `Request failed: ${type}`));
+                    reject(new Error(response?.error || `请求失败：${type}`));
                     return;
                 }
                 resolve(response.data);
@@ -97,14 +97,14 @@
 
         flushParagraph();
         flushList();
-        return blocks.join('') || '<p class="wqp-ai-muted">No content.</p>';
+        return blocks.join('') || '<p class="wqp-ai-muted">暂无内容。</p>';
     }
 
     function formatDateTime(value) {
         if (!value) return '';
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return String(value);
-        return date.toLocaleString();
+        return date.toLocaleString('zh-CN');
     }
 
     function clamp(value, min, max) {
@@ -126,8 +126,8 @@
         card.classList.toggle('is-collapsed', collapsed);
         const toggle = card.querySelector('[data-action="toggle-collapse"]');
         if (toggle) {
-            toggle.textContent = collapsed ? 'Expand' : 'Collapse';
-            toggle.setAttribute('aria-label', collapsed ? 'Expand AI card' : 'Collapse AI card');
+            toggle.textContent = collapsed ? '展开' : '收起';
+            toggle.setAttribute('aria-label', collapsed ? '展开 AI 助手卡片' : '收起 AI 助手卡片');
         }
         if (!collapsed && !card.style.height) {
             card.style.height = '';
@@ -194,18 +194,18 @@
         card.innerHTML = `
             <div class="wqp-ai-card-head">
                 <div class="wqp-ai-card-title-row">
-                    <div class="wqp-ai-prompt-title">AI forum assistant</div>
+                    <div class="wqp-ai-prompt-title">AI 论坛助手</div>
                     <div class="wqp-ai-window-actions">
-                        <span class="wqp-ai-badge">Enabled</span>
-                        <button type="button" class="wqp-ai-window-button" data-action="toggle-collapse" aria-label="Collapse AI card">Collapse</button>
+                        <span class="wqp-ai-badge">已启用</span>
+                        <button type="button" class="wqp-ai-window-button" data-action="toggle-collapse" aria-label="收起 AI 助手卡片">收起</button>
                     </div>
                 </div>
-                <div class="wqp-ai-prompt-body">Summarize this post and its comments, then draft a reply when needed.</div>
+                <div class="wqp-ai-prompt-body">总结当前帖子及评论，并可按需生成回复草稿。</div>
             </div>
             <div class="wqp-ai-card-content">
-                <div class="wqp-ai-intro">No AI call is made until you request a summary.</div>
+                <div class="wqp-ai-intro">只有在你请求总结后才会调用 AI。</div>
                 <div class="wqp-ai-prompt-actions">
-                    <button type="button" class="wqp-ai-primary" data-action="summarize">AI summary</button>
+                    <button type="button" class="wqp-ai-primary" data-action="summarize">AI 总结</button>
                 </div>
                 <div class="wqp-ai-prompt-status"></div>
             </div>
@@ -241,11 +241,11 @@
     function setCardError(error) {
         setCardContent(`
             <div class="wqp-ai-error">
-                <strong>Action failed</strong>
+                <strong>操作失败</strong>
                 <p>${escapeHtml(error.message || String(error))}</p>
             </div>
             <div class="wqp-ai-prompt-actions">
-                <button type="button" class="wqp-ai-primary" data-action="summarize">Retry summary</button>
+                <button type="button" class="wqp-ai-primary" data-action="summarize">重新总结</button>
             </div>
         `);
     }
@@ -255,11 +255,36 @@
             const config = await sendMessage('WQP_LLM_CONFIG_GET');
             if (config?.enabled === true) {
                 ensureCard();
+                setCollapsed(config.defaultCollapsed === true);
                 await loadCachedSummary();
             }
         } catch (error) {
-            console.warn('[WQP AI] Unable to read AI settings:', error);
+            console.warn('[WQP AI] 无法读取 AI 设置：', error);
         }
+    }
+
+    async function markCurrentPostRead() {
+        const postId = location.pathname.match(/\/community\/posts\/(\d+)/)?.[1] || '';
+        if (!postId) return;
+        const title = document.querySelector('.community-post h1, .post-title, h1')?.textContent?.trim()
+            || document.title.replace(/\s+[–-]\s+WorldQuant BRAIN.*$/i, '').trim();
+        const postDate = document.querySelector('.community-post time[datetime], article time[datetime], time[datetime]')
+            ?.getAttribute('datetime') || '';
+        try {
+            await sendMessage('WQP_COMMUNITY_POST_MARK_READ', {
+                postId,
+                postUrl: location.href,
+                title,
+                postDate,
+            });
+        } catch (error) {
+            console.warn('[WQP Community] 无法记录帖子阅读状态：', error);
+        }
+    }
+
+    function initialize() {
+        markCurrentPostRead();
+        showCardIfEnabled();
     }
 
     async function loadCachedSummary() {
@@ -269,7 +294,7 @@
                 renderSummary(data);
             }
         } catch (error) {
-            console.warn('[WQP AI] Unable to load cached summary:', error);
+            console.warn('[WQP AI] 无法加载缓存的总结：', error);
         }
     }
 
@@ -279,27 +304,27 @@
         const source = data.source || {};
         const commentCount = `${source.commentCount || 0}/${source.totalCommentCount || 0}`;
         const cacheTime = formatDateTime(data.cache?.savedAt || source.fetchedAt);
-        const statusText = data.cached ? 'Loaded cached summary.' : 'Summary generated and saved.';
+        const statusText = data.cached ? '已加载缓存的总结。' : '总结已生成并保存。';
         const markdown = data.summaryMarkdown || '';
         setCardContent(`
             <div class="wqp-ai-summary-head">
-                <div class="wqp-ai-source" title="${escapeHtml(source.title || 'Support post')}">${escapeHtml(source.title || 'Support post')}</div>
-                <span class="wqp-ai-badge ${data.cached ? 'is-cached' : 'is-fresh'}">${data.cached ? 'Cached' : 'Generated'}</span>
+                <div class="wqp-ai-source" title="${escapeHtml(source.title || '论坛帖子')}">${escapeHtml(source.title || '论坛帖子')}</div>
+                <span class="wqp-ai-badge ${data.cached ? 'is-cached' : 'is-fresh'}">${data.cached ? '已缓存' : '新生成'}</span>
             </div>
             <div class="wqp-ai-meta">
-                <span>Comments ${escapeHtml(commentCount)}</span>
+                <span>评论 ${escapeHtml(commentCount)}</span>
                 ${cacheTime ? `<span>${escapeHtml(cacheTime)}</span>` : ''}
             </div>
             <div class="wqp-ai-markdown">
                 ${markdownToHtml(markdown)}
             </div>
             <label class="wqp-ai-field wqp-ai-comment-box">
-                <span>Comment instruction</span>
-                <textarea id="wqp-ai-comment-instruction" rows="3" placeholder="Optional: tone, angle, extra constraints">${escapeHtml(latestInstruction)}</textarea>
+                <span>回复要求</span>
+                <textarea id="wqp-ai-comment-instruction" rows="3" placeholder="可选：语气、回复角度或其他限制">${escapeHtml(latestInstruction)}</textarea>
             </label>
             <div class="wqp-ai-prompt-actions">
-                <button type="button" class="wqp-ai-primary" data-action="draft">Generate comment</button>
-                <button type="button" data-action="refresh-summary">Refresh summary</button>
+                <button type="button" class="wqp-ai-primary" data-action="draft">生成回复</button>
+                <button type="button" data-action="refresh-summary">重新总结</button>
             </div>
             <div class="wqp-ai-prompt-status success">${escapeHtml(statusText)}</div>
         `);
@@ -311,30 +336,30 @@
         const markdown = draft.commentMarkdown || draft.commentText || '';
         setCardContent(`
             <div class="wqp-ai-summary-head">
-                <div class="wqp-ai-source" title="${escapeHtml(latestSummary?.source?.title || 'Support post')}">${escapeHtml(latestSummary?.source?.title || 'Support post')}</div>
-                <span class="wqp-ai-badge">Draft</span>
+                <div class="wqp-ai-source" title="${escapeHtml(latestSummary?.source?.title || '论坛帖子')}">${escapeHtml(latestSummary?.source?.title || '论坛帖子')}</div>
+                <span class="wqp-ai-badge">草稿</span>
             </div>
             <div class="wqp-ai-draft-preview" id="wqp-ai-comment-preview">
-                <div class="wqp-ai-preview-title">Markdown preview</div>
+                <div class="wqp-ai-preview-title">Markdown 预览</div>
                 ${markdownToHtml(markdown)}
             </div>
             <label class="wqp-ai-field">
-                <span>Editable Markdown</span>
+                <span>可编辑的 Markdown</span>
                 <textarea id="wqp-ai-comment-draft" rows="8">${escapeHtml(markdown)}</textarea>
             </label>
             <div class="wqp-ai-prompt-actions">
-                <button type="button" class="wqp-ai-primary" data-action="insert">Insert draft</button>
-                <button type="button" data-action="post">Post comment</button>
-                <button type="button" data-action="draft">Regenerate</button>
-                <button type="button" data-action="show-summary">Summary</button>
+                <button type="button" class="wqp-ai-primary" data-action="insert">插入草稿</button>
+                <button type="button" data-action="post">发布回复</button>
+                <button type="button" data-action="draft">重新生成</button>
+                <button type="button" data-action="show-summary">返回总结</button>
             </div>
-            <div class="wqp-ai-prompt-status success">Comment draft ready.</div>
+            <div class="wqp-ai-prompt-status success">回复草稿已生成。</div>
         `);
     }
 
     async function runSummary(forceRefresh = false) {
         try {
-            setCardLoading(forceRefresh ? 'Refreshing summary with AI...' : 'Checking saved summary...');
+            setCardLoading(forceRefresh ? '正在使用 AI 重新总结…' : '正在检查已保存的总结…');
             const data = await sendMessage('WQP_COMMUNITY_AI_SUMMARIZE_POST', {
                 postUrl: location.href,
                 forceRefresh,
@@ -350,7 +375,7 @@
             const instructionInput = document.getElementById('wqp-ai-comment-instruction');
             const instruction = instructionInput ? instructionInput.value : latestInstruction;
             latestInstruction = instruction;
-            setCardStatus('Generating comment draft...', 'loading');
+            setCardStatus('正在生成回复草稿…', 'loading');
             const data = await sendMessage('WQP_COMMUNITY_AI_DRAFT_COMMENT', {
                 postUrl: latestSummary?.source?.postUrl || location.href,
                 customInstruction: instruction,
@@ -372,12 +397,12 @@
     function insertDraftIntoPage() {
         const text = document.getElementById('wqp-ai-comment-draft')?.value?.trim();
         if (!text) {
-            setCardStatus('No comment draft to insert.', 'error');
+            setCardStatus('没有可插入的回复草稿。', 'error');
             return false;
         }
         const editor = document.querySelector('textarea[name="body"], textarea#comment_body, .comment-form textarea, [contenteditable="true"], .ck-editor__editable, trix-editor');
         if (!editor) {
-            setCardStatus('Comment editor was not found on this page.', 'error');
+            setCardStatus('当前页面未找到回复编辑器。', 'error');
             return false;
         }
         editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -390,30 +415,30 @@
             editor.innerHTML = markdownToHtml(text);
             editor.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
         }
-        setCardStatus('Draft inserted into the page editor.', 'success');
+        setCardStatus('草稿已插入页面编辑器。', 'success');
         return true;
     }
 
     async function postDraft() {
         const text = document.getElementById('wqp-ai-comment-draft')?.value?.trim();
         if (!text) {
-            setCardStatus('No comment draft to post.', 'error');
+            setCardStatus('没有可发布的回复草稿。', 'error');
             return;
         }
-        if (!confirm(`Post this AI comment to the current Support thread?\n\n${text}`)) return;
+        if (!confirm(`确定将这条 AI 回复发布到当前论坛帖子吗？\n\n${text}`)) return;
         try {
-            setCardLoading('Posting comment...');
+            setCardLoading('正在发布回复…');
             const data = await sendMessage('WQP_COMMUNITY_AI_POST_COMMENT', {
                 postUrl: latestDraft?.source?.postUrl || location.href,
                 commentText: text,
             });
             setCardContent(`
                 <div class="wqp-ai-success">
-                    <strong>Comment posted.</strong>
+                    <strong>回复已发布。</strong>
                     <p>${escapeHtml(data.comment?.url || '')}</p>
                 </div>
                 <div class="wqp-ai-prompt-actions">
-                    <button type="button" class="wqp-ai-primary" data-action="refresh-summary">Refresh summary</button>
+                    <button type="button" class="wqp-ai-primary" data-action="refresh-summary">重新总结</button>
                 </div>
             `);
         } catch (error) {
@@ -441,14 +466,14 @@
         const preview = document.getElementById('wqp-ai-comment-preview');
         if (!preview) return;
         preview.innerHTML = `
-            <div class="wqp-ai-preview-title">Markdown preview</div>
+            <div class="wqp-ai-preview-title">Markdown 预览</div>
             ${markdownToHtml(event.target.value)}
         `;
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', showCardIfEnabled, { once: true });
+        document.addEventListener('DOMContentLoaded', initialize, { once: true });
     } else {
-        showCardIfEnabled();
+        initialize();
     }
 })();

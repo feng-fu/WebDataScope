@@ -1,37 +1,41 @@
 #wqp-prod-memo-card {
-    width: min(320px, calc(100vw - 32px));
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: min(920px, calc(100vw - 48px)) !important;
+    min-width: 0 !important;
     margin: 12px 0;
-    padding: 12px;
+    padding: 14px;
     border: 1px solid #d8e0ec;
-    border-radius: 8px;
-    background: #ffffff;
+    border-radius: 9px;
+    background: #fff;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
     color: #1f2937;
     font: 12px/1.4 "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: clip;
     z-index: 10020;
 }
 
-#wqp-prod-memo-card.is-floating {
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
+#wqp-prod-memo-card * {
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .wqp-prod-header {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 10px;
 }
 
 .wqp-prod-title {
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
 }
 
 .wqp-prod-alpha {
-    max-width: 170px;
+    max-width: 360px;
     overflow: hidden;
     color: #64748b;
     text-overflow: ellipsis;
@@ -39,13 +43,96 @@
     font-variant-numeric: tabular-nums;
 }
 
+.wqp-prod-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.wqp-prod-date-status {
+    display: grid;
+    gap: 2px;
+    color: #111827;
+    font-size: 10px;
+    line-height: 1.25;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.wqp-prod-date-status strong {
+    color: inherit;
+    font-variant-numeric: tabular-nums;
+}
+
+.wqp-prod-date-status.is-stale {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.wqp-prod-calculate {
+    min-height: 32px;
+    padding: 6px 12px;
+    border: 1px solid #7c3aed;
+    border-radius: 6px;
+    background: #7c3aed;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.wqp-prod-calculate:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.wqp-prod-source-block + .wqp-prod-source-block {
+    margin-top: 10px;
+}
+
+.wqp-prod-source-block {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.wqp-prod-source-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.wqp-prod-source-badge {
+    padding: 2px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+}
+
+.wqp-prod-source-badge.is-platform {
+    background: #e8f1ff;
+    color: #1d4ed8;
+}
+
+.wqp-prod-source-badge.is-local {
+    background: #f3e8ff;
+    color: #7e22ce;
+}
+
 .wqp-prod-grid {
     display: grid;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
 }
 
-.wqp-prod-stat {
+.wqp-prod-metric {
     min-width: 0;
     padding: 8px;
     border: 1px solid #e5eaf2;
@@ -53,61 +140,72 @@
     background: #f8fafc;
 }
 
-.wqp-prod-stat.is-disabled {
-    opacity: 0.55;
+.wqp-prod-metric.is-disabled {
+    opacity: 0.62;
 }
 
-.wqp-prod-stat-label {
+.wqp-prod-metric-label {
+    overflow: hidden;
     color: #64748b;
     font-size: 11px;
     font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.wqp-prod-stat-value {
+.wqp-prod-metric-value {
     margin-top: 2px;
     font-size: 16px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
 }
 
-.wqp-prod-stat-value.is-good {
-    color: #15803d;
-}
+.wqp-prod-metric-value.is-good { color: #15803d; }
+.wqp-prod-metric-value.is-warn { color: #b45309; }
+.wqp-prod-metric-value.is-bad { color: #b91c1c; }
+.wqp-prod-metric-value.is-empty,
+.wqp-prod-metric-sub { color: #64748b; }
 
-.wqp-prod-stat-value.is-warn {
-    color: #b45309;
-}
-
-.wqp-prod-stat-value.is-bad {
-    color: #b91c1c;
-}
-
-.wqp-prod-stat-value.is-empty,
-.wqp-prod-stat-sub {
-    color: #64748b;
-}
-
-.wqp-prod-stat-sub {
-    margin-top: 1px;
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-}
-
-.wqp-prod-stat-time {
-    margin-top: 5px;
+.wqp-prod-metric-sub,
+.wqp-prod-metric-meta {
+    margin-top: 2px;
     overflow: hidden;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 10px;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
 
-.wqp-prod-empty {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px dashed #d8e0ec;
+.wqp-prod-assumption {
+    margin-top: 9px;
     color: #64748b;
+    font-size: 10px;
+}
+
+.wqp-prod-warning {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    background: #fff1f2;
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.wqp-prod-calc-status {
+    min-height: 16px;
+    margin-top: 6px;
+    color: #475569;
     font-size: 11px;
-    text-align: center;
+}
+
+.wqp-prod-calc-status.error { color: #b91c1c; }
+.wqp-prod-calc-status.success { color: #15803d; }
+
+@media (max-width: 760px) {
+    .wqp-prod-grid { grid-template-columns: 1fr; }
+    .wqp-prod-header { align-items: stretch; flex-direction: column; }
+    .wqp-prod-header-actions { align-items: stretch; flex-direction: column; margin-left: 0; }
+    .wqp-prod-date-status { flex: 1; text-align: left; }
 }

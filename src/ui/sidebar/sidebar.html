@@ -6,10 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WorldQuant Scope</title>
     <link rel="stylesheet" href="sidebar.css">
-    <script src="../../vendor/js/pako.min.js"></script>
-    <script src="../../vendor/js/msgpack.min.js"></script>
-    <script src="../../vendor/js/jszip.min.js"></script>
-    <script src="../../shared/dataStore.js"></script>
 </head>
 
 <body>
@@ -23,9 +19,9 @@
 
         <nav class="tabs" aria-label="侧边栏功能">
             <button class="tab is-active" type="button" data-tab="settings">设置</button>
-            <button class="tab" type="button" data-tab="session">Session</button>
             <button class="tab" type="button" data-tab="prodmemo">ProdMemo</button>
             <button class="tab" type="button" data-tab="community">Community</button>
+            <button class="tab" type="button" data-tab="help">指南&amp;日志</button>
         </nav>
 
         <section id="settingsPanel" class="panel is-active" data-panel="settings">
@@ -34,12 +30,23 @@
                     <input id="dataAnalysis" type="checkbox">
                     <span>启用数据分析</span>
                 </label>
-                <label class="check-row">
-                    <input id="apiMonitorEnabled" type="checkbox">
-                    <span>显示 API 监控面板</span>
-                </label>
+              <label class="check-row">
+                <input id="apiMonitorEnabled" type="checkbox">
+                <span>显示 API 监控面板</span>
+              </label>
+              <label class="check-row">
+                <input id="llmEnabled" type="checkbox">
+                <span>启用 AI 总结和评论</span>
+              </label>
+              <label class="field">
+                <span>AI 助手默认状态</span>
+                <select id="llmDefaultState">
+                  <option value="expanded">展开</option>
+                  <option value="collapsed">收起</option>
+                </select>
+              </label>
 
-                <div class="section-title">Genius 排名分析</div>
+              <div class="section-title">Genius 排名分析</div>
                 <label class="check-row">
                     <input id="geniusCombineTag" type="checkbox">
                     <span>考虑 Combined Performance</span>
@@ -49,11 +56,7 @@
                     <input id="geniusAlphaCount" type="number" min="0" step="1" required>
                 </label>
 
-                <div class="section-title">AI Forum Assistant</div>
-                <label class="check-row">
-                    <input id="llmEnabled" type="checkbox">
-                    <span>启用 AI 总结和评论</span>
-                </label>
+              <div class="section-title">AI 设置</div>
                 <label class="field">
                     <span>Base URL</span>
                     <input id="llmBaseUrl" type="url" placeholder="https://api.deepseek.com 或 https://api.moonshot.cn/v1">
@@ -75,9 +78,7 @@
                 <input id="importDataZipFile" type="file" accept=".zip,application/zip,application/x-zip-compressed" hidden>
             </div>
             <div id="dataMeta" class="info-box"></div>
-        </section>
 
-        <section id="sessionPanel" class="panel" data-panel="session">
             <div class="section-title">会话保活</div>
             <form id="sessionForm" class="form-stack">
                 <label class="check-row">
@@ -126,19 +127,23 @@
         </section>
 
         <section id="prodMemoPanel" class="panel" data-panel="prodmemo">
-            <div class="section-title">ProdMemo 缓存</div>
+            <div class="section-title">ProdMemo 本地相关性</div>
             <div id="prodMemoSummary" class="info-box"></div>
             <div class="grid-actions">
-                <button id="refreshProdMemoBtn" type="button">刷新</button>
-                <button id="exportProdMemoBtn" type="button">导出 JSON</button>
-                <button id="importProdMemoBtn" type="button">导入 JSON</button>
-                <button id="clearProdMemoBtn" class="danger" type="button">清空缓存</button>
+                <button id="syncProdMemoBtn" type="button">增量同步 Alpha + PnL</button>
+                <button id="refreshProdMemoBtn" type="button">刷新状态</button>
+            </div>
+            <div class="grid-actions">
+                <button id="exportProdMemoBtn" type="button">导出 Corr JSON</button>
+                <button id="importProdMemoBtn" type="button">导入 Corr JSON</button>
+                <button id="clearProdMemoBtn" class="danger" type="button">清空 Corr</button>
+                <button id="clearProdMemoSyncBtn" class="danger" type="button">清空同步数据</button>
                 <input id="importProdMemoFile" type="file" accept="application/json,.json" hidden>
             </div>
 
             <div id="prodMemoStatus" class="info-box" aria-live="polite"></div>
 
-            <div class="section-title">缓存列表</div>
+            <div class="section-title">Platform / Local Corr</div>
             <label class="field">
                 <span>Alpha ID 搜索</span>
                 <input id="prodMemoSearch" type="search" placeholder="输入 Alpha ID">
@@ -147,6 +152,22 @@
         </section>
 
         <section id="communityPanel" class="panel" data-panel="community">
+            <div class="section-title community-favorites-title">论坛收藏</div>
+            <div class="favorite-post-controls">
+                <label class="favorite-post-page-size" for="favoritePostsPageSize">
+                    <span>每页数量</span>
+                    <input id="favoritePostsPageSize" type="number" min="1" max="50" step="1" value="5">
+                </label>
+                <button id="refreshFavoritePostsBtn" type="button">刷新收藏</button>
+            </div>
+            <div id="favoritePostsSummary" class="info-box" aria-live="polite"></div>
+            <div id="favoritePostsList" class="favorite-post-list" aria-live="polite"></div>
+            <nav id="favoritePostsPagination" class="favorite-post-pagination" aria-label="论坛收藏翻页" hidden>
+                <button id="favoritePostsPrevBtn" type="button">上一页</button>
+                <span id="favoritePostsPageStatus" aria-live="polite"></span>
+                <button id="favoritePostsNextBtn" type="button">下一页</button>
+            </nav>
+
             <div class="section-title">Support 连接</div>
             <div class="form-stack">
                 <button id="connectSupportBtn" class="primary" type="button">连接 Support</button>
@@ -200,6 +221,13 @@
             <div class="section-title">运行日志</div>
             <div id="communitySummary" class="info-box"></div>
             <ol id="communityLog" class="log-list" aria-live="polite"></ol>
+        </section>
+
+        <section id="helpPanel" class="panel" data-panel="help">
+            <div id="guideBox" class="guide-box" aria-live="polite"></div>
+            <div class="section-title">更新日志</div>
+            <div id="changelogBox" class="changelog-box" aria-live="polite"></div>
+            <div id="acknowledgementsBox" class="acknowledgements-box" aria-live="polite"></div>
         </section>
     </main>
 
